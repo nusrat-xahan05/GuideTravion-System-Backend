@@ -2,7 +2,7 @@ import { Server } from "http";
 
 import app from "./app";
 import { envVars } from "./app/config/env";
-import connectDB from "./app/config/db";
+import mongoose from "mongoose";
 // import { seedSuperAdmin } from "./app/utils/seedSuperAdmin";
 // import { connectRedis } from "./app/config/redis.config";
 
@@ -10,7 +10,8 @@ import connectDB from "./app/config/db";
 let server: Server;
 const startServer = async () => {
     try {
-        connectDB();
+        await mongoose.connect(envVars.DB_URL);
+        console.log("Connected To MongoDB");
 
         server = app.listen(envVars.PORT, () => {
             console.log(`Server is Listening To Port ${envVars.PORT}`);
