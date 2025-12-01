@@ -3,7 +3,7 @@ import { Server } from "http";
 import app from "./app";
 import { envVars } from "./app/config/env";
 import mongoose from "mongoose";
-// import { seedSuperAdmin } from "./app/utils/seedSuperAdmin";
+import { seedSuperAdmin } from "./app/utils/seedAdmin";
 // import { connectRedis } from "./app/config/redis.config";
 
 
@@ -24,7 +24,7 @@ const startServer = async () => {
 (async () => {
     // await connectRedis();
     await startServer();
-    // await seedSuperAdmin();
+    await seedSuperAdmin();
 })()
 
 // Handle unhandled promise rejections
