@@ -7,7 +7,10 @@ import { userLoginSchema } from "./auth.validaton";
 const router = Router();
 
 
+// USER LOGIN ------
 router.post("/login", validateRequest(userLoginSchema), AuthController.credentialsLogin);
-// router.post("/logout", AuthController.logout);
+
+// USER LOGOUT ------
+router.post("/logout", AuthController.logout);
 
 export const AuthRoutes = router

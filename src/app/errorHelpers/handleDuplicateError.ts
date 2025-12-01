@@ -1,4 +1,4 @@
-import { TGenericErrorResponse } from "../interfaces/error.types";
+import { TGenericErrorResponse } from "../types/error.types";
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
