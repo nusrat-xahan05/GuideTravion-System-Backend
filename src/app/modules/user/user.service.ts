@@ -1,6 +1,6 @@
 import { envVars } from "../../config/env";
 import AppError from "../../errorHelpers/AppError";
-import { IGuide, ITourist, IUser } from "./user.interface";
+import { IGuide, ITourist, IUser, TUserRole } from "./user.interface";
 import { GuideModel, TouristModel, UserModel } from "./user.model";
 import httpStatus from "http-status";
 import bcryptjs from "bcryptjs"
@@ -21,14 +21,15 @@ export const UserServices = {
             password: hashedPassword,
             ...rest
         })
-        
+
         return user;
     },
 
 
+    // TOURIST REGISTRATION ------ (TOURIST ENDPOINT)
     async registerTourist(payload: Partial<ITourist>) {
         const user = await this.createBaseUser(payload);
-        
+
         const tourist = await TouristModel.create({
             _id: user._id,
             ...payload
@@ -38,9 +39,10 @@ export const UserServices = {
     },
 
 
+    // GUIDE REGISTRATION ------ (GUIDE ENDPOINT)
     async registerGuide(payload: Partial<IGuide>) {
         const user = await this.createBaseUser(payload);
-        
+
         const guide = await GuideModel.create({
             _id: user._id,
             ...payload
@@ -48,4 +50,31 @@ export const UserServices = {
 
         return guide;
     },
+
+
+    // GET ME USER ------ (USER ENDPOINT)
+    async myProfile(userId: string) {
+        const userInfo = await UserModel.findById(userId).select("-password").lean();
+
+        if (userInfo?.role === TUserRole.TOURIST) {
+            const profile = await TouristModel.findOne({ _id: userInfo?._id }).lean();
+            return {
+                data: {
+                    ...userInfo, profile
+                }
+            };
+        }
+        if (userInfo?.role === TUserRole.GUIDE) {
+            const profile = await GuideModel.findOne({ _id: userInfo?._id }).lean();
+            return {
+                data: {
+                    ...userInfo, profile
+                }
+            };
+        }
+
+        return {
+            data: userInfo
+        }
+    }
 };

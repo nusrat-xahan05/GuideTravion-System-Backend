@@ -4,8 +4,10 @@ import { sendResponse } from "../../utils/sendResponse";
 import { catchAsync } from "../../utils/catchAsync";
 import httpStatus from "http-status";
 import { UserServices } from "./user.service";
+import { JwtPayload } from "jsonwebtoken";
 
 export const UserController = {
+    // TOURIST REGISTRATION ------ (TOURIST ENDPOINT)
     registerTourist: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
         const result = await UserServices.registerTourist(req.body)
 
@@ -18,6 +20,7 @@ export const UserController = {
     }),
 
 
+    // GUIDE REGISTRATION ------ (GUIDE ENDPOINT)
     registerGuide: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
         const result = await UserServices.registerGuide(req.body)
 
@@ -27,15 +30,19 @@ export const UserController = {
             message: "Guide Created Successfully",
             data: result,
         })
+    }),
+
+
+    // GET ME USER ------ (USER ENDPOINT)
+    myProfile: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        const decodedToken = req.user as JwtPayload
+        const result = await UserServices.myProfile(decodedToken.userId);
+
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Your Profile Retrieved Successfully",
+            data: result.data
+        })
     })
 };
-
-// export const registerTourist = catchAsync(async (req: Request, res: Response) => {
-//   const result = await userService.registerTourist(req.body);
-//   return sendResponse(res, 201, true, result.message, { user: result.user, tokens: result.tokens });
-// });
-
-
-// export const UserControllers = {
-//     createUser
-// }
