@@ -15,6 +15,18 @@ export const UserController = {
             message: "Tourist Created Successfully",
             data: result,
         })
+    }),
+
+
+    registerGuide: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        const result = await UserServices.registerGuide(req.body)
+
+        sendResponse(res, {
+            statusCode: httpStatus.CREATED,
+            success: true,
+            message: "Guide Created Successfully",
+            data: result,
+        })
     })
 };
 

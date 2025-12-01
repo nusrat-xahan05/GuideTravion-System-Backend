@@ -2,22 +2,16 @@ import { model, Schema, Types } from "mongoose";
 import { IGuide, ITourist, IUser, TUserRole, TUserStatus } from "./user.interface";
 
 const userSchema = new Schema<IUser>({
-    name: { type: String, required: true },
+    firstName: { type: String, required: true },
+    lastName: { type: String },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     profileImage: { type: String },
     bio: { type: String },
-    phone: { type: String },
+    phone: { type: String, required: true },
     address: { type: String },
     country: { type: String, required: true },
     languages: { type: [String], default: [] },
-
-    role: {
-        type: String,
-        enum: Object.values(TUserRole),
-        required: true,
-        default: TUserRole.TOURIST,
-    },
 
     userStatus: {
         type: String,
@@ -25,7 +19,12 @@ const userSchema = new Schema<IUser>({
         default: TUserStatus.ACTIVE,
     },
 
-    isVerified: { type: Boolean, default: false }
+    isVerified: { type: Boolean, default: false },
+    role: {
+        type: String,
+        enum: Object.values(TUserRole),
+        required: true
+    },
 }, {
     timestamps: true,
     versionKey: false,
@@ -52,7 +51,10 @@ export const TouristModel = model<ITourist>("Tourist", touristSchema);
 
 const guideSchema = new Schema<IGuide>({
     _id: { type: Types.ObjectId, ref: "User", required: true },
-    expertise: { type: [String], required: true },
+    isVerifiedByAdmin: { type: Boolean, default: false },
+    occupation: { type: String, required: true },
+    city: { type: String, required: true },
+    expertise: { type: [String] },
     yearsOfExperience: { type: Number },
     hourlyRate: { type: Number },
     dailyRate: { type: Number },

@@ -1,7 +1,7 @@
 import { envVars } from "../../config/env";
 import AppError from "../../errorHelpers/AppError";
-import { ITourist, IUser } from "./user.interface";
-import { TouristModel, UserModel } from "./user.model";
+import { IGuide, ITourist, IUser } from "./user.interface";
+import { GuideModel, TouristModel, UserModel } from "./user.model";
 import httpStatus from "http-status";
 import bcryptjs from "bcryptjs"
 
@@ -28,12 +28,24 @@ export const UserServices = {
 
     async registerTourist(payload: Partial<ITourist>) {
         const user = await this.createBaseUser(payload);
-
+        
         const tourist = await TouristModel.create({
             _id: user._id,
             ...payload
         });
 
-        return tourist
+        return tourist;
+    },
+
+
+    async registerGuide(payload: Partial<IGuide>) {
+        const user = await this.createBaseUser(payload);
+        
+        const guide = await GuideModel.create({
+            _id: user._id,
+            ...payload
+        });
+
+        return guide;
     },
 };

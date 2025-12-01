@@ -14,7 +14,8 @@ export enum TUserStatus {
 
 export interface IUser {
     _id?: Types.ObjectId;
-    name: string;
+    firstName: string;
+    lastName?: string;
     email: string;
     password: string;
     profileImage?: string;
@@ -39,7 +40,10 @@ export interface ITourist extends IUser {
 
 export interface IGuide extends IUser {
     // NID / Passport Number: string;
-    expertise: string[];
+    isVerifiedByAdmin?: boolean;
+    occupation: string;
+    city: string;
+    expertise?: string[];
     yearsOfExperience?: number;
     hourlyRate?: number;
     dailyRate?: number;
