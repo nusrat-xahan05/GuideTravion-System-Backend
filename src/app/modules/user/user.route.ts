@@ -17,8 +17,13 @@ router.post("/register/guide", validateRequest(registerGuideSchema), UserControl
 // GET ME USER ------ (USER ENDPOINT)
 router.get("/my-profile", checkAuth(...Object.values(TUserRole)), UserController.myProfile);
 
-// router.get("/", authGuard(["admin"]), UserController.listUsers);
-// router.get("/:id", authGuard(), UserController.getUser);
+// GET ALL USERS ------ (ADMIN ENDPOINT)
+router.get('/all-users', checkAuth(TUserRole.ADMIN), UserController.getAllUsers);
+
+// GET SINGLE USER ------ (ADMIN ENDPOINT)
+router.get("/:id", checkAuth(TUserRole.ADMIN), UserController.getSingleUser);
+
+
 // router.patch("/:id", authGuard(), validateRequest(UpdateUserSchema), UserController.updateUser);
 
 export const UserRoutes = router

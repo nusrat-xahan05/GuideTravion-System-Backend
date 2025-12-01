@@ -44,5 +44,33 @@ export const UserController = {
             message: "Your Profile Retrieved Successfully",
             data: result.data
         })
+    }),
+
+
+    // GET ALL USERS ------ 
+    getAllUsers: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        const query = req.query;
+        const result = await UserServices.getAllUsers(query as Record<string, string>);
+
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Users Retrieved Successfully",
+            data: result.data,
+            meta: result.meta
+        })
+    }),
+
+
+    // GET SINGLE USER ------
+    getSingleUser: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        const userId = req.params.id;
+        const result = await UserServices.getSingleUser(userId);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.CREATED,
+            message: "User Retrieved Successfully",
+            data: result.data
+        })
     })
 };

@@ -4,6 +4,8 @@ import { IGuide, ITourist, IUser, TUserRole } from "./user.interface";
 import { GuideModel, TouristModel, UserModel } from "./user.model";
 import httpStatus from "http-status";
 import bcryptjs from "bcryptjs"
+import { QueryBuilder } from "../../utils/queryBuilder";
+import { userSearchableFields } from "./user.constant";
 
 export const UserServices = {
     async createBaseUser(payload: Partial<IUser>) {
@@ -66,6 +68,58 @@ export const UserServices = {
         }
         if (userInfo?.role === TUserRole.GUIDE) {
             const profile = await GuideModel.findOne({ _id: userInfo?._id }).lean();
+            return {
+                data: {
+                    ...userInfo, profile
+                }
+            };
+        }
+
+        return {
+            data: userInfo
+        }
+    },
+
+
+    // GET ALL USERS ------ 
+    async getAllUsers(query: Record<string, string>) {
+        const queryBuilder = new QueryBuilder(UserModel.find(), query)
+        const usersData = queryBuilder
+            .filter()
+            .search(userSearchableFields)
+            .sort()
+            .fields()
+            .paginate();
+
+        const [data, meta] = await Promise.all([
+            usersData.build(),
+            queryBuilder.getMeta()
+        ])
+
+        return {
+            data,
+            meta
+        }
+    },
+
+
+    // GET SINGLE USER BY ADMIN ------
+    async getSingleUser(userId: string) {
+        const userInfo = await UserModel.findById(userId).select("-password").lean();
+        if (!userInfo) {
+            throw new AppError(httpStatus.NOT_FOUND, "No User Exist With This Id");
+        }
+
+        if (userInfo.role === TUserRole.TOURIST) {
+            const profile = await TouristModel.findOne({ _id: userInfo._id }).lean();
+            return {
+                data: {
+                    ...userInfo, profile
+                }
+            };
+        }
+        if (userInfo.role === TUserRole.GUIDE) {
+            const profile = await GuideModel.findOne({ _id: userInfo._id }).lean();
             return {
                 data: {
                     ...userInfo, profile
