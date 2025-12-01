@@ -3,6 +3,7 @@ import { IUser, TUserStatus } from "../user/user.interface";
 import { UserModel } from "../user/user.model";
 import httpStatus from "http-status";
 import bcryptjs from "bcryptjs"
+import { createUserTokens } from "../../utils/userToken";
 
 
 
@@ -24,6 +25,15 @@ export const AuthServices = {
             throw new AppError(httpStatus.BAD_REQUEST, "Incorrect Password");
         }
 
-        console.log('fron services: ', isUserExist);
+        const userTokens = createUserTokens(isUserExist);
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { password: pass, ...rest } = isUserExist.toObject();
+
+        return {
+            accessToken: userTokens.accessToken,
+            refreshToken: userTokens.refreshToken,
+            user: rest
+        }
     },
 };
