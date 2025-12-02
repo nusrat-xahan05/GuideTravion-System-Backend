@@ -10,21 +10,26 @@ const router = Router();
 
 
 // CREATE TOUR ------ (GUIDE ENDPOINT)
-router.post( "/create-tour", checkAuth(TUserRole.GUIDE), multerUpload.array("files"), validateRequest(createTourSchema), TourController.createTour);
+router.post("/create-tour", checkAuth(TUserRole.GUIDE), multerUpload.array("files"), validateRequest(createTourSchema), TourController.createTour);
 
-// router.patch( "/:id", checkAuth(TUserRole.GUIDE), validateRequest(updateTourSchema), TourController.updateTour);
+// GET ALL TOUR(BY EACH) ------ (GUIDE ENDPOINT)
+router.get("/my-tours", checkAuth(TUserRole.GUIDE), TourController.getMyTours);
 
-// router.get( "/my-tours", checkAuth(TUserRole.GUIDE), TourController.getMyTours);
+// GET ALL PENDING TOUR ------ (ADMIN ENDPOINT)
+router.get("/pending",checkAuth(TUserRole.ADMIN),TourController.getPendingTours);
+
+// GET ALL APPROVED TOUR ------ (PUBLIC ENDPOINT)
+router.get("/", TourController.getAllApprovedTours);
+
+// GET SINGLE APPROVED TOUR ------ (PUBLIC ENDPOINT)
+router.get("/:slug", TourController.getSingleTour);
+
+// UPDATE TOUR ------ (GUIDE ENDPOINT)
+router.patch("/update/:slug", checkAuth(TUserRole.GUIDE), multerUpload.array("files"), validateRequest(createTourSchema), TourController.updateTour);
+
+// APPROVE/REJECT A TOUR ------ (ADMIN ENDPOINT)
+router.patch("/tour-approval/:slug", checkAuth(TUserRole.ADMIN), TourController.tourApproval);
 
 
-// // ADMIN ROUTES
-// router.patch( "/approve/:id", checkAuth(TUserRole.ADMIN), TourController.approveTour);
-
-// router.patch( "/reject/:id", checkAuth(TUserRole.ADMIN), TourController.rejectTour);
-
-
-// // PUBLIC ROUTES
-// router.get("/", TourController.getApprovedTours);
-// router.get("/:slug", TourController.getSingleTour);
 
 export const TourRoutes = router;
