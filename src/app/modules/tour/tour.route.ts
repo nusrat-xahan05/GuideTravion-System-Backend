@@ -4,12 +4,13 @@ import { createTourSchema } from "./tour.validation";
 import { checkAuth } from "../../middlewares/checkAuth";
 import { TUserRole } from "../user/user.interface";
 import { TourController } from "./tour.controller";
+import { multerUpload } from "../../config/multer.config";
 
 const router = Router();
 
 
 // CREATE TOUR ------ (GUIDE ENDPOINT)
-router.post( "/create-tour", checkAuth(TUserRole.GUIDE), validateRequest(createTourSchema), TourController.createTour);
+router.post( "/create-tour", checkAuth(TUserRole.GUIDE), multerUpload.array("files"), validateRequest(createTourSchema), TourController.createTour);
 
 // router.patch( "/:id", checkAuth(TUserRole.GUIDE), validateRequest(updateTourSchema), TourController.updateTour);
 
