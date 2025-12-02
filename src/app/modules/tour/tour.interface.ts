@@ -4,7 +4,7 @@ import { Types } from "mongoose";
 //     name: string;
 // }
 
-export enum TourTypeEnum {
+export enum TTourType {
     ADVENTURE = "ADVENTURE",
     ART = "ART",
     CULTURAL = "CULTURAL",
@@ -16,10 +16,21 @@ export enum TourTypeEnum {
     PHOTOGRAPHY = "PHOTOGRAPHY",
 }
 
+export enum TTourDifficultyLevel {
+  EASY = "EASY",
+  MODERATE = "MODERATE",
+  HARD = "HARD",
+}
+
 export enum TTourStatus {
     ACTIVE = "ACTIVE",
-    INACTIVE = "INACTIVE",
-    BLOCKED = "BLOCKED"
+    INACTIVE = "INACTIVE"
+}
+
+export enum TTourStatusByAdmin {
+  PENDING = "PENDING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
 }
 
 export interface ITour {
@@ -28,8 +39,8 @@ export interface ITour {
     slug?: string;
     description: string;
 
-    tourType: TourTypeEnum;
-    difficultyLevel?: "EASY" | "MODERATE" | "HARD";
+    tourType: TTourType;
+    difficultyLevel?: TTourDifficultyLevel;
     tags?: string[];
     status?: TTourStatus; 
     // tourType: Types.ObjectId
@@ -54,7 +65,7 @@ export interface ITour {
     excludes?: string[];
 
     createdBy?: Types.ObjectId;
-    isApproved: boolean;
+    statusByAdmin: TTourStatusByAdmin;
     averageRating?: number;
     totalReviews?: number;
     createdAt?: Date;

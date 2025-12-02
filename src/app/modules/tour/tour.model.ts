@@ -1,5 +1,5 @@
 import { model, Schema, Types } from "mongoose";
-import { ITour, TourTypeEnum, TTourStatus } from "./tour.interface";
+import { ITour, TTourDifficultyLevel, TTourStatus, TTourStatusByAdmin, TTourType } from "./tour.interface";
 
 const TourSchema = new Schema<ITour>(
     {
@@ -9,13 +9,13 @@ const TourSchema = new Schema<ITour>(
 
         tourType: {
             type: String,
-            enum: Object.values(TourTypeEnum),
+            enum: Object.values(TTourType),
             required: true,
         },
         difficultyLevel: {
             type: String,
-            enum: ["EASY", "MODERATE", "HARD"],
-            default: "EASY",
+            enum: Object.values(TTourDifficultyLevel),
+            default: TTourDifficultyLevel.EASY,
         },
         tags: { type: [String] },
         status: {
@@ -42,10 +42,14 @@ const TourSchema = new Schema<ITour>(
         includes: { type: [String], default: [] },
         excludes: { type: [String], default: [] },
 
-        createdBy: { type: Types.ObjectId, ref: "GuideModel", required: true },
-        isApproved: { type: Boolean, default: false },
-        averageRating: { type: Number, default: 0 },
-        totalReviews: { type: Number, default: 0 },
+        createdBy: { type: Types.ObjectId, ref: "GuideModel" },
+        statusByAdmin: {
+            type: String,
+            enum: Object.values(TTourStatusByAdmin),
+            default: TTourStatusByAdmin.PENDING
+        },
+        averageRating: { type: Number },
+        totalReviews: { type: Number },
     },
     {
         timestamps: true,
