@@ -24,6 +24,4 @@ router.get('/all-users', checkAuth(TUserRole.ADMIN), UserController.getAllUsers)
 router.get("/:id", checkAuth(TUserRole.ADMIN), UserController.getSingleUser);
 
 
-// router.patch("/:id", authGuard(), validateRequest(UpdateUserSchema), UserController.updateUser);
-
 export const UserRoutes = router
