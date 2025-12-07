@@ -42,7 +42,7 @@ export interface IGuide extends IUser {
     // NID / Passport Number: string;
     isVerifiedByAdmin?: boolean;
     occupation: string;
-    city: string;
+    city?: string;
     expertise?: string[];
     yearsOfExperience?: number;
     hourlyRate?: number;

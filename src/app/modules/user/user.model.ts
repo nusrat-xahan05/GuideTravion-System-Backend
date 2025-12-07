@@ -53,7 +53,7 @@ const guideSchema = new Schema<IGuide>({
     _id: { type: Types.ObjectId, ref: "User", required: true },
     isVerifiedByAdmin: { type: Boolean, default: false },
     occupation: { type: String, required: true },
-    city: { type: String, required: true },
+    city: { type: String },
     expertise: { type: [String] },
     yearsOfExperience: { type: Number },
     hourlyRate: { type: Number },

@@ -8,6 +8,33 @@ import { createUserTokens } from "../../utils/userToken";
 
 
 export const AuthServices = {
+    // GET USER BASIC INFO ------
+    async getMe(userId: string) {
+        const userInfo = await UserModel.findById(userId).select("-password").lean();
+
+        // if (userInfo?.role === TUserRole.TOURIST) {
+        //     const profile = await TouristModel.findOne({ _id: userInfo?._id }).lean();
+        //     return {
+        //         data: {
+        //             ...userInfo, profile
+        //         }
+        //     };
+        // }
+        // if (userInfo?.role === TUserRole.GUIDE) {
+        //     const profile = await GuideModel.findOne({ _id: userInfo?._id }).lean();
+        //     return {
+        //         data: {
+        //             ...userInfo, profile
+        //         }
+        //     };
+        // }
+
+        return {
+            data: userInfo
+        }
+    },
+
+    // USER LOGIN ------
     async credentialsLogin(payload: Partial<IUser>) {
         const { email, password } = payload;
 

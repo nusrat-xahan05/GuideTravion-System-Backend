@@ -102,6 +102,29 @@ export const UserServices = {
         }
     },
 
+    // UPDATE USER PROFILE BY ID ------ (USER ENDPOINT)
+    async updateProfile(userId: string, payload: Partial<IUser | IGuide | ITourist>) {
+        const isUserExist = await UserModel.findById(userId);
+        if (!isUserExist) {
+            throw new AppError(httpStatus.BAD_REQUEST, "No User Exist With This Id");
+        }
+
+        let updatedData = null;
+        if(isUserExist.role === TUserRole.ADMIN){
+            updatedData = await UserModel.findByIdAndUpdate(userId, payload, { new: true, runValidators: true })
+        }
+        if(isUserExist.role === TUserRole.GUIDE){
+            updatedData = await GuideModel.findByIdAndUpdate(userId, payload, { new: true, runValidators: true })
+        }
+        if(isUserExist.role === TUserRole.TOURIST){
+            updatedData = await TouristModel.findByIdAndUpdate(userId, payload, { new: true, runValidators: true })
+        }
+
+        return {
+            data: updatedData
+        }
+    },
+
 
     // GET SINGLE USER BY ADMIN ------
     async getSingleUser(userId: string) {

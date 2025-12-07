@@ -61,6 +61,22 @@ export const UserController = {
         })
     }),
 
+    // UPDATE USER PROFILE BY ID ------ (USER ENDPOINT)
+    updateProfile: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        const decodedToken = req.user as JwtPayload
+        const payload = {
+            ...req.body,
+            profileImage: req.file?.path
+        }
+        const result = await UserServices.updateProfile(decodedToken.userId, payload);
+
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "Profile Updated Successfully",
+            data: result
+        })
+    }),
 
     // GET SINGLE USER ------
     getSingleUser: catchAsync(async (req: Request, res: Response, next: NextFunction) => {

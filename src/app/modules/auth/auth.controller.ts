@@ -5,9 +5,23 @@ import httpStatus from "http-status";
 import { catchAsync } from "../../utils/catchAsync";
 import { AuthServices } from "./auth.service";
 import { setAuthCookie } from "../../utils/setCookie";
+import { JwtPayload } from "jsonwebtoken";
 
 
 export const AuthController = {
+    // GET USER BASIC INFO ------
+    getMe: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        const decodedToken = req.user as JwtPayload
+        const result = await AuthServices.getMe(decodedToken.userId);
+
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Your Profile Retrieved Successfully",
+            data: result.data
+        })
+    }),
+
     // USER LOGIN ------
     credentialsLogin: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
         const result = await AuthServices.credentialsLogin(req.body);

@@ -1,9 +1,10 @@
 import { Router } from "express";
-import { registerGuideSchema, registerTouristSchema } from "./user.validation";
+import { registerGuideSchema, registerTouristSchema, updateGuideSchema, updateTouristSchema } from "./user.validation";
 import { validateRequest } from "../../middlewares/validateRequest";
 import { UserController } from "./user.controller";
 import { checkAuth } from "../../middlewares/checkAuth";
 import { TUserRole } from "./user.interface";
+import { multerUpload } from "../../config/multer.config";
 
 const router = Router();
 
@@ -19,6 +20,17 @@ router.get("/my-profile", checkAuth(...Object.values(TUserRole)), UserController
 
 // GET ALL USERS ------ (ADMIN ENDPOINT)
 router.get('/all-users', checkAuth(TUserRole.ADMIN), UserController.getAllUsers);
+
+// UPDATE USER PROFILE BY ID ------ (USER ENDPOINT)
+router.patch("/update-profile", checkAuth(...Object.values(TUserRole)), multerUpload.single("file"), (req, res, next) => {
+    const role = req.user.role;
+    const schema =
+        role === "GUIDE"
+            ? updateGuideSchema
+            : updateTouristSchema;
+
+    return validateRequest(schema)(req, res, next);
+}, UserController.updateProfile);
 
 // GET SINGLE USER ------ (ADMIN ENDPOINT)
 router.get("/:id", checkAuth(TUserRole.ADMIN), UserController.getSingleUser);
