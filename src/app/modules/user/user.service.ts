@@ -123,11 +123,14 @@ export const UserServices = {
         }
 
         // All checks passed → update verificationRequest
-        guide.verificationRequest = TVerificationReqStatus.PENDING;
-        await guide.save();
+        const updatedGuide = await GuideModel.findByIdAndUpdate(
+            userId,
+            { verificationRequest: TVerificationReqStatus.PENDING },
+            { new: true, runValidators: true }
+        );
 
         return {
-            data: { verificationRequest: guide.verificationRequest }
+            data: updatedGuide
         };
     },
 

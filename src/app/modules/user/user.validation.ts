@@ -62,7 +62,7 @@ export const registerGuideSchema = registerBaseUserSchema.extend({
                 : "occupation Must Be a String"
         })
         .min(2, { message: "occupation is Too Short" })
-        .max(16, { message: "occupation is Too Long" }),
+        .max(30, { message: "occupation is Too Long" }),
 
     role: z.enum(TUserRole).default(TUserRole.GUIDE),
     verificationRequest: z.enum(TVerificationReqStatus).default(TVerificationReqStatus.NOT_SEND),
@@ -115,7 +115,7 @@ export const updateGuideSchema = updateBaseUserSchema.extend({
                 : "occupation Must Be a String"
         })
         .min(2, { message: "occupation is Too Short" })
-        .max(16, { message: "occupation is Too Long" }),
+        .max(30, { message: "occupation is Too Long" }),
     city: z
         .string({
             error: (issue) => issue.input === undefined

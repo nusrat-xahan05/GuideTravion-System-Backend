@@ -16,7 +16,7 @@ export enum TVerificationReqStatus {
     PENDING = "PENDING",
     REJECTED = "REJECTED",
     APPROVED = "APPROVED",
-    NOT_SEND = "NOT_SEND"
+    NOT_SEND = "SEND REQUEST"
 };
 
 export interface IUser {
