@@ -67,7 +67,3 @@ const guideSchema = new Schema<IGuide>({
 });
 
 export const GuideModel = model<IGuide>("Guide", guideSchema);
-
-
-
-

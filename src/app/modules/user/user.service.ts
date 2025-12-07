@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { envVars } from "../../config/env";
 import AppError from "../../errorHelpers/AppError";
 import { IGuide, ITourist, IUser, TUserRole } from "./user.interface";
@@ -5,7 +6,7 @@ import { GuideModel, TouristModel, UserModel } from "./user.model";
 import httpStatus from "http-status";
 import bcryptjs from "bcryptjs"
 import { QueryBuilder } from "../../utils/queryBuilder";
-import { userSearchableFields } from "./user.constant";
+import { guideFields, touristFields, userFields, userSearchableFields } from "./user.constant";
 
 export const UserServices = {
     async createBaseUser(payload: Partial<IUser>) {
@@ -103,26 +104,56 @@ export const UserServices = {
     },
 
     // UPDATE USER PROFILE BY ID ------ (USER ENDPOINT)
-    async updateProfile(userId: string, payload: Partial<IUser | IGuide | ITourist>) {
-        const isUserExist = await UserModel.findById(userId);
-        if (!isUserExist) {
+    async updateProfile(userId: string, payload: Partial<IUser | ITourist | IGuide | any>) {
+        const user = await UserModel.findById(userId);
+        if (!user) {
             throw new AppError(httpStatus.BAD_REQUEST, "No User Exist With This Id");
         }
 
-        let updatedData = null;
-        if(isUserExist.role === TUserRole.ADMIN){
-            updatedData = await UserModel.findByIdAndUpdate(userId, payload, { new: true, runValidators: true })
+        const userPayload: Partial<IUser | any> = {};
+        const guidePayload: Partial<IGuide | any> = {};
+        const touristPayload: Partial<ITourist | any> = {};
+
+        for (const key in payload) {
+            if (userFields.includes(key)) userPayload[key] = payload[key];
+            if (guideFields.includes(key)) guidePayload[key] = payload[key];
+            if (touristFields.includes(key)) touristPayload[key] = payload[key];
         }
-        if(isUserExist.role === TUserRole.GUIDE){
-            updatedData = await GuideModel.findByIdAndUpdate(userId, payload, { new: true, runValidators: true })
+
+        let updatedUserData = null;
+        let updatedExtraData = null;
+
+        if (Object.keys(userPayload).length > 0) {
+            updatedUserData = await UserModel.findByIdAndUpdate(
+                userId,
+                userPayload,
+                { new: true, runValidators: true }
+            );
         }
-        if(isUserExist.role === TUserRole.TOURIST){
-            updatedData = await TouristModel.findByIdAndUpdate(userId, payload, { new: true, runValidators: true })
+
+        if (user.role === TUserRole.GUIDE && Object.keys(guidePayload).length > 0) {
+            updatedExtraData = await GuideModel.findByIdAndUpdate(
+                userId,
+                guidePayload,
+                { new: true, runValidators: true }
+            );
+        }
+
+        if (user.role === TUserRole.TOURIST && Object.keys(touristPayload).length > 0) {
+            updatedExtraData = await TouristModel.findByIdAndUpdate(
+                userId,
+                touristPayload,
+                { new: true, runValidators: true }
+            );
         }
 
         return {
-            data: updatedData
-        }
+            success: true,
+            data: {
+                ...(updatedUserData?.toObject?.() ?? {}),
+                ...(updatedExtraData?.toObject?.() ?? {})
+            }
+        };
     },
 
 
