@@ -7,6 +7,46 @@ import { UserServices } from "./user.service";
 import { JwtPayload } from "jsonwebtoken";
 
 export const UserController = {
+    // GET ME USER ------ (USER ENDPOINT)
+    myProfile: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        const decodedToken = req.user as JwtPayload
+        const result = await UserServices.myProfile(decodedToken.userId);
+
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Your Profile Retrieved Successfully",
+            data: result.data
+        })
+    }),
+
+    // GET ALL USERS ------ 
+    getAllUsers: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        const query = req.query;
+        const result = await UserServices.getAllUsers(query as Record<string, string>);
+
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Users Retrieved Successfully",
+            data: result.data,
+            meta: result.meta
+        })
+    }),
+
+    // SEND VERIFICATION REQUEST ------ (GUIDE ENDPOINT)
+    sendVerifyReq: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        const decodedToken = req.user as JwtPayload
+        const result = await UserServices.sendVerifyReq(decodedToken.userId);
+
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Verification Request Sent Successfully",
+            data: result.data
+        })
+    }),
+
     // TOURIST REGISTRATION ------ (TOURIST ENDPOINT)
     registerTourist: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
         const result = await UserServices.registerTourist(req.body)
@@ -29,35 +69,6 @@ export const UserController = {
             success: true,
             message: "Guide Created Successfully",
             data: result,
-        })
-    }),
-
-
-    // GET ME USER ------ (USER ENDPOINT)
-    myProfile: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-        const decodedToken = req.user as JwtPayload
-        const result = await UserServices.myProfile(decodedToken.userId);
-
-        sendResponse(res, {
-            statusCode: httpStatus.OK,
-            success: true,
-            message: "Your Profile Retrieved Successfully",
-            data: result.data
-        })
-    }),
-
-
-    // GET ALL USERS ------ 
-    getAllUsers: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-        const query = req.query;
-        const result = await UserServices.getAllUsers(query as Record<string, string>);
-
-        sendResponse(res, {
-            statusCode: httpStatus.OK,
-            success: true,
-            message: "Users Retrieved Successfully",
-            data: result.data,
-            meta: result.meta
         })
     }),
 

@@ -1,5 +1,5 @@
 import { model, Schema, Types } from "mongoose";
-import { IGuide, ITourist, IUser, TUserRole, TUserStatus } from "./user.interface";
+import { IGuide, ITourist, IUser, TUserRole, TUserStatus, TVerificationReqStatus } from "./user.interface";
 
 const userSchema = new Schema<IUser>({
     firstName: { type: String, required: true },
@@ -52,6 +52,7 @@ export const TouristModel = model<ITourist>("Tourist", touristSchema);
 const guideSchema = new Schema<IGuide>({
     _id: { type: Types.ObjectId, ref: "User", required: true },
     isVerifiedByAdmin: { type: Boolean, default: false },
+    verificationRequest: {type: String, enum: Object.values(TVerificationReqStatus), default:TVerificationReqStatus.NOT_SEND},
     occupation: { type: String, required: true },
     city: { type: String },
     expertise: { type: [String] },

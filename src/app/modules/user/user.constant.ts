@@ -13,3 +13,7 @@ export const guideFields = [
 export const touristFields = [
     "travelInterests", "preferredStyles"
 ];
+
+export const verifyRequiredFieldsForGuide = ["firstName", "email", "profileImage", "bio",
+    "phone", "address", "country", "occupation", "city", "expertise", "yearsOfExperience",
+    "hourlyRate", "dailyRate"]

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { TUserRole } from "./user.interface";
+import { TUserRole, TVerificationReqStatus } from "./user.interface";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 
 export const registerBaseUserSchema = z.object({
@@ -65,6 +65,7 @@ export const registerGuideSchema = registerBaseUserSchema.extend({
         .max(16, { message: "occupation is Too Long" }),
 
     role: z.enum(TUserRole).default(TUserRole.GUIDE),
+    verificationRequest: z.enum(TVerificationReqStatus).default(TVerificationReqStatus.NOT_SEND),
 });
 
 

@@ -10,7 +10,14 @@ export enum TUserStatus {
     ACTIVE = "ACTIVE",
     INACTIVE = "INACTIVE",
     BLOCKED = "BLOCKED"
-}
+};
+
+export enum TVerificationReqStatus {
+    PENDING = "PENDING",
+    REJECTED = "REJECTED",
+    APPROVED = "APPROVED",
+    NOT_SEND = "NOT_SEND"
+};
 
 export interface IUser {
     _id?: Types.ObjectId;
@@ -41,6 +48,7 @@ export interface ITourist extends IUser {
 export interface IGuide extends IUser {
     // NID / Passport Number: string;
     isVerifiedByAdmin?: boolean;
+    verificationRequest?: TVerificationReqStatus;
     occupation: string;
     city?: string;
     expertise?: string[];
