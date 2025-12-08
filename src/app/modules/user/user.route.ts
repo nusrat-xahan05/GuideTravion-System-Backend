@@ -12,8 +12,11 @@ const router = Router();
 // GET ME USER ------ (USER ENDPOINT)
 router.get("/my-profile", checkAuth(...Object.values(TUserRole)), UserController.myProfile);
 
-// GET ALL USERS ------ (ADMIN ENDPOINT)
-router.get('/all-users', checkAuth(TUserRole.ADMIN), UserController.getAllUsers);
+// GET ALL Guides ------ (ADMIN ENDPOINT)
+router.get('/all-guides', checkAuth(TUserRole.ADMIN), UserController.getAllGuides);
+
+// GET ALL Tourists ------ (ADMIN ENDPOINT)
+// router.get('/all-tourists', checkAuth(TUserRole.ADMIN), UserController.getAllTourists);
 
 // SEND VERIFICATION REQUEST ------ (GUIDE ENDPOINT)
 router.post('/send-verify', checkAuth(TUserRole.GUIDE), UserController.sendVerifyReq);
@@ -37,6 +40,9 @@ router.patch("/update-profile", checkAuth(...Object.values(TUserRole)), multerUp
 
 // GET SINGLE USER ------ (ADMIN ENDPOINT)
 router.get("/:id", checkAuth(TUserRole.ADMIN), UserController.getSingleUser);
+
+// UPDATE SINGLE USER ------ (ADMIN ENDPOINT)
+router.patch("/:id", checkAuth(TUserRole.ADMIN), UserController.updateSingleUser);
 
 
 export const UserRoutes = router

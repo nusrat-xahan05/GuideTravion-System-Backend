@@ -1,4 +1,22 @@
-export const userSearchableFields = ["email", "role", "address", "userStatus", "isVerified",];
+export const guideSearchableFields = ["occupation", "verificationRequest", "city", "_id.languages", "_id.userStatus", "_id.email", "_id.country"];
+
+export const guideNumericFields = ["yearsOfExperience", "hourlyRate", "dailyRate", "rating", "totalReviews"];
+
+// export const guideSearchableFields = [
+//   "rating",
+//   "verificationRequest",
+//   "yearsOfExperience",
+//   "hourlyRate",
+//   "dailyRate",
+//   "totalReviews",
+//   "city",
+//   "user.languages",
+//   "user.userStatus",
+//   "user.email",
+//   "user.country"
+// ];
+
+export const touristSearchableFields = ["languages", "userStatus", "user.email", "user.country"];
 
 export const userFields = [
     "firstName", "lastName", "profileImage", "bio",

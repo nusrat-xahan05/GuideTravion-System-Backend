@@ -5,8 +5,27 @@ import { IGuide, ITourist, IUser, TUserRole, TUserStatus, TVerificationReqStatus
 import { GuideModel, TouristModel, UserModel } from "./user.model";
 import httpStatus from "http-status";
 import bcryptjs from "bcryptjs"
-import { QueryBuilder } from "../../utils/queryBuilder";
-import { guideFields, touristFields, userFields, userSearchableFields, verifyRequiredFieldsForGuide } from "./user.constant";
+import { guideFields, touristFields, userFields, verifyRequiredFieldsForGuide } from "./user.constant";
+import { PipelineStage } from "mongoose";
+
+
+
+
+// export interface AggregationResult<T = any> {
+//     data: T[];
+//     meta: { page: number; limit: number; total: number; totalPage: number };
+// }
+
+// async function runAggregateAndFormat(model: any, pipelineInfo: { pipeline: any[]; page: number; limit: number; }): Promise<AggregationResult> {
+//     const { pipeline, page, limit } = pipelineInfo;
+//     const aggResult = await model.aggregate(pipeline).exec();
+//     const facet = aggResult && aggResult[0] ? aggResult[0] : { data: [], totalCount: [] };
+//     const data = facet.data || [];
+//     const total = (facet.totalCount && facet.totalCount[0]) ? facet.totalCount[0].count : 0;
+//     const totalPage = Math.ceil(total / limit);
+//     return { data, meta: { page, limit, total, totalPage } };
+// }
+
 
 export const UserServices = {
     async createBaseUser(payload: Partial<IUser>) {
@@ -56,25 +75,112 @@ export const UserServices = {
     },
 
     // GET ALL USERS ------ 
-    async getAllUsers(query: Record<string, string>) {
-        const queryBuilder = new QueryBuilder(UserModel.find(), query)
-        const usersData = queryBuilder
-            .filter()
-            .search(userSearchableFields)
-            .sort()
-            .fields()
-            .paginate();
 
-        const [data, meta] = await Promise.all([
-            usersData.build(),
-            queryBuilder.getMeta()
-        ])
+    async getAllGuides(query: Record<string, string>) {
+
+        const page = Number(query.page) || 1;
+        const limit = Number(query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const searchTerm = query.searchTerm || "";
+
+        // ⭐ SEARCH CONDITIONS
+        const searchConditions: any[] = [];
+        if (searchTerm) {
+            searchConditions.push(
+                { "user.firstName": { $regex: searchTerm, $options: "i" } },
+                { "user.lastName": { $regex: searchTerm, $options: "i" } },
+                { "user.email": { $regex: searchTerm, $options: "i" } },
+                { occupation: { $regex: searchTerm, $options: "i" } }
+            );
+        }
+
+        // ⭐ FILTER CONDITIONS FROM QUERY
+        const filterConditions: any[] = [];
+
+        Object.keys(query).forEach(key => {
+            if (["page", "limit", "sort", "searchTerm"].includes(key)) return;
+
+            if (key.startsWith("_id.")) {
+                const userField = key.split(".")[1];
+                filterConditions.push({
+                    [`user.${userField}`]: query[key]
+                });
+            } else {
+                filterConditions.push({ [key]: query[key] });
+            }
+        });
+
+        const match: any = {};
+
+        if (searchConditions.length > 0) match.$or = searchConditions;
+        if (filterConditions.length > 0) match.$and = filterConditions;
+
+        const pipeline: PipelineStage[] = [
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "_id",
+                    foreignField: "_id",
+                    as: "user",
+                },
+            },
+            { $unwind: "$user" },
+
+            // ⭐ apply match only if needed
+            ...(Object.keys(match).length > 0 ? [{ $match: match }] : []),
+
+            // ⭐ sorting
+            {
+                $sort: {
+                    [query.sort || "createdAt"]: query.sort?.startsWith("-") ? -1 : 1,
+                },
+            },
+
+            { $skip: skip },
+            { $limit: limit },
+        ];
+
+        const data = await GuideModel.aggregate(pipeline);
+
+        const total = await GuideModel.aggregate([
+            pipeline[0], // lookup
+            pipeline[1], // unwind
+            ...(Object.keys(match).length > 0 ? [{ $match: match }] : []),
+            { $count: "total" }
+        ]);
 
         return {
             data,
-            meta
-        }
+            meta: {
+                page,
+                limit,
+                total: total[0]?.total || 0,
+                totalPage: Math.ceil((total[0]?.total || 0) / limit),
+            },
+        };
     },
+
+    // async getAllUsers(query: Record<string, string>) {
+    //     const queryBuilder = new QueryBuilder(GuideModel.find().populate("user"), query)
+    //     const usersData = queryBuilder
+    //         .filter()
+    //         .search(guideSearchableFields)
+    //         .sort()
+    //         .fields()
+    //         .paginate();
+
+    //     const [data, meta] = await Promise.all([
+    //         usersData.build(),
+    //         queryBuilder.getMeta()
+    //     ])
+
+    //     return {
+    //         data,
+    //         meta
+    //     }
+    // },
+
 
     // SEND VERIFICATION REQUEST ------ (GUIDE ENDPOINT)
     async sendVerifyReq(userId: string) {
@@ -240,5 +346,43 @@ export const UserServices = {
         return {
             data: userInfo
         }
-    }
+    },
+
+    // UPDATE SINGLE USER ------ (ADMIN ENDPOINT)
+    async updateSingleUser(userId: string, payload: Partial<IUser | IGuide | any>) {
+        const isUserExist = await UserModel.findById(userId);
+        if (!isUserExist) {
+            throw new AppError(httpStatus.BAD_REQUEST, "No User Exist With This Id");
+        }
+
+        const updatedUserData = await UserModel.findByIdAndUpdate(
+            userId,
+            payload,
+            { new: true, runValidators: true }
+        )
+
+        let updatedGuideData = null;
+        if (isUserExist.role === TUserRole.GUIDE) {
+            const guidePayload: Partial<IGuide> = { ...payload } as Partial<IGuide>;
+
+            // If verificationRequest is APPROVED, set isVerifiedByAdmin = true
+            if (payload.verificationRequest === TVerificationReqStatus.APPROVED) {
+                guidePayload.isVerifiedByAdmin = true;
+            }
+
+            updatedGuideData = await GuideModel.findByIdAndUpdate(
+                userId,
+                guidePayload,
+                { new: true, runValidators: true }
+            );
+        }
+
+        return {
+            success: true,
+            data: {
+                ...(updatedUserData?.toObject?.() ?? {}),
+                ...(updatedGuideData?.toObject?.() ?? {})
+            }
+        };
+    },
 };

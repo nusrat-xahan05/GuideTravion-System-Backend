@@ -52,7 +52,7 @@ export const TouristModel = model<ITourist>("Tourist", touristSchema);
 const guideSchema = new Schema<IGuide>({
     _id: { type: Types.ObjectId, ref: "User", required: true },
     isVerifiedByAdmin: { type: Boolean, default: false },
-    verificationRequest: {type: String, enum: Object.values(TVerificationReqStatus), default:TVerificationReqStatus.NOT_SEND},
+    verificationRequest: { type: String, enum: Object.values(TVerificationReqStatus), default: TVerificationReqStatus.NOT_SEND },
     occupation: { type: String, required: true },
     city: { type: String },
     expertise: { type: [String] },
@@ -68,3 +68,4 @@ const guideSchema = new Schema<IGuide>({
 });
 
 export const GuideModel = model<IGuide>("Guide", guideSchema);
+

@@ -21,18 +21,32 @@ export const UserController = {
     }),
 
     // GET ALL USERS ------ 
-    getAllUsers: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    getAllGuides: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
         const query = req.query;
-        const result = await UserServices.getAllUsers(query as Record<string, string>);
+        const result = await UserServices.getAllGuides(query as Record<string, string>);
 
         sendResponse(res, {
             statusCode: httpStatus.OK,
             success: true,
-            message: "Users Retrieved Successfully",
+            message: "Guides Retrieved Successfully",
             data: result.data,
             meta: result.meta
         })
     }),
+
+    // getAllTourists: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    //     const query = req.query;
+    //     const result = await UserServices.getAllTourists(query as Record<string, string>);
+
+    //     sendResponse(res, {
+    //         statusCode: httpStatus.OK,
+    //         success: true,
+    //         message: "Tourists Retrieved Successfully",
+    //         data: result.data,
+    //         meta: result.meta
+    //     })
+    // }),
+
 
     // SEND VERIFICATION REQUEST ------ (GUIDE ENDPOINT)
     sendVerifyReq: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -99,5 +113,18 @@ export const UserController = {
             message: "User Retrieved Successfully",
             data: result.data
         })
-    })
+    }),
+
+    // UPDATE SINGLE USER ------ (ADMIN ENDPOINT)
+    updateSingleUser: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        const userId = req.params.id;
+        const result = await UserServices.updateSingleUser(userId, req.body);
+
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "Profile Updated Successfully",
+            data: result
+        })
+    }),
 };
