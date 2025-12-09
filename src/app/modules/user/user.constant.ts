@@ -2,20 +2,6 @@ export const guideSearchableFields = ["occupation", "verificationRequest", "city
 
 export const guideNumericFields = ["yearsOfExperience", "hourlyRate", "dailyRate", "rating", "totalReviews"];
 
-// export const guideSearchableFields = [
-//   "rating",
-//   "verificationRequest",
-//   "yearsOfExperience",
-//   "hourlyRate",
-//   "dailyRate",
-//   "totalReviews",
-//   "city",
-//   "user.languages",
-//   "user.userStatus",
-//   "user.email",
-//   "user.country"
-// ];
-
 export const touristSearchableFields = ["languages", "userStatus", "user.email", "user.country"];
 
 export const userFields = [

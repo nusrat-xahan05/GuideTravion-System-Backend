@@ -20,7 +20,7 @@ export const UserController = {
         })
     }),
 
-    // GET ALL USERS ------ 
+    // GET ALL Guides ------ (ADMIN ENDPOINT)
     getAllGuides: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
         const query = req.query;
         const result = await UserServices.getAllGuides(query as Record<string, string>);
@@ -34,19 +34,19 @@ export const UserController = {
         })
     }),
 
-    // getAllTourists: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    //     const query = req.query;
-    //     const result = await UserServices.getAllTourists(query as Record<string, string>);
+    // GET ALL Tourists ------ (ADMIN ENDPOINT)
+    getAllTourists: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        const query = req.query;
+        const result = await UserServices.getAllTourists(query as Record<string, string>);
 
-    //     sendResponse(res, {
-    //         statusCode: httpStatus.OK,
-    //         success: true,
-    //         message: "Tourists Retrieved Successfully",
-    //         data: result.data,
-    //         meta: result.meta
-    //     })
-    // }),
-
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Tourists Retrieved Successfully",
+            data: result.data,
+            meta: result.meta
+        })
+    }),
 
     // SEND VERIFICATION REQUEST ------ (GUIDE ENDPOINT)
     sendVerifyReq: catchAsync(async (req: Request, res: Response, next: NextFunction) => {

@@ -10,23 +10,6 @@ import { PipelineStage } from "mongoose";
 
 
 
-
-// export interface AggregationResult<T = any> {
-//     data: T[];
-//     meta: { page: number; limit: number; total: number; totalPage: number };
-// }
-
-// async function runAggregateAndFormat(model: any, pipelineInfo: { pipeline: any[]; page: number; limit: number; }): Promise<AggregationResult> {
-//     const { pipeline, page, limit } = pipelineInfo;
-//     const aggResult = await model.aggregate(pipeline).exec();
-//     const facet = aggResult && aggResult[0] ? aggResult[0] : { data: [], totalCount: [] };
-//     const data = facet.data || [];
-//     const total = (facet.totalCount && facet.totalCount[0]) ? facet.totalCount[0].count : 0;
-//     const totalPage = Math.ceil(total / limit);
-//     return { data, meta: { page, limit, total, totalPage } };
-// }
-
-
 export const UserServices = {
     async createBaseUser(payload: Partial<IUser>) {
         const { email, password, ...rest } = payload;
@@ -74,17 +57,15 @@ export const UserServices = {
         }
     },
 
-    // GET ALL USERS ------ 
 
+    // GET ALL Guides ------ (ADMIN ENDPOINT)
     async getAllGuides(query: Record<string, string>) {
-
         const page = Number(query.page) || 1;
         const limit = Number(query.limit) || 10;
         const skip = (page - 1) * limit;
 
         const searchTerm = query.searchTerm || "";
 
-        // ⭐ SEARCH CONDITIONS
         const searchConditions: any[] = [];
         if (searchTerm) {
             searchConditions.push(
@@ -95,7 +76,6 @@ export const UserServices = {
             );
         }
 
-        // ⭐ FILTER CONDITIONS FROM QUERY
         const filterConditions: any[] = [];
 
         Object.keys(query).forEach(key => {
@@ -112,7 +92,6 @@ export const UserServices = {
         });
 
         const match: any = {};
-
         if (searchConditions.length > 0) match.$or = searchConditions;
         if (filterConditions.length > 0) match.$and = filterConditions;
 
@@ -126,14 +105,10 @@ export const UserServices = {
                 },
             },
             { $unwind: "$user" },
-
-            // ⭐ apply match only if needed
             ...(Object.keys(match).length > 0 ? [{ $match: match }] : []),
-
-            // ⭐ sorting
             {
                 $sort: {
-                    [query.sort || "createdAt"]: query.sort?.startsWith("-") ? -1 : 1,
+                    [query.sort || "rating"]: query.sort?.startsWith("-") ? -1 : 1,
                 },
             },
 
@@ -161,25 +136,98 @@ export const UserServices = {
         };
     },
 
-    // async getAllUsers(query: Record<string, string>) {
-    //     const queryBuilder = new QueryBuilder(GuideModel.find().populate("user"), query)
-    //     const usersData = queryBuilder
-    //         .filter()
-    //         .search(guideSearchableFields)
-    //         .sort()
-    //         .fields()
-    //         .paginate();
 
-    //     const [data, meta] = await Promise.all([
-    //         usersData.build(),
-    //         queryBuilder.getMeta()
-    //     ])
+    // GET ALL Tourists ------ (ADMIN ENDPOINT)
+    async getAllTourists(query: Record<string, string>) {
+        const page = Number(query.page) || 1;
+        const limit = Number(query.limit) || 10;
+        const skip = (page - 1) * limit;
 
-    //     return {
-    //         data,
-    //         meta
-    //     }
-    // },
+        const searchTerm = query.searchTerm || "";
+
+        /* ---------------------- SEARCH CONDITIONS ----------------------- */
+        const searchConditions: any[] = [];
+        if (searchTerm) {
+            searchConditions.push(
+                { "user.firstName": { $regex: searchTerm, $options: "i" } },
+                { "user.lastName": { $regex: searchTerm, $options: "i" } },
+                { "user.email": { $regex: searchTerm, $options: "i" } },
+                { "user.country": { $regex: searchTerm, $options: "i" } },
+            );
+        }
+
+        /* ---------------------- FILTER CONDITIONS ----------------------- */
+        const filterConditions: any[] = [];
+        Object.keys(query).forEach((key) => {
+            if (["page", "limit", "sort", "searchTerm"].includes(key)) return;
+
+            // user.xxx fields
+            if (key.startsWith("user.")) {
+                const field = key.split(".")[1];
+                filterConditions.push({ [`user.${field}`]: query[key] });
+            } else {
+                filterConditions.push({ [key]: query[key] });
+            }
+        });
+
+        const match: any = {};
+        if (searchConditions.length > 0) match.$or = searchConditions;
+        if (filterConditions.length > 0) match.$and = filterConditions;
+
+        /* -------------------------- SORTING ----------------------------- */
+        const sortField = (query.sort || "bookingsCount").replace("-", "");
+        const sortOrder: 1 | -1 = query.sort?.startsWith("-") ? -1 : 1;
+
+        const sortObj: Record<string, 1 | -1> = {};
+        sortObj[sortField] = sortOrder;
+
+        /* ---------------------- AGGREGATION PIPELINE -------------------- */
+        const pipeline: PipelineStage[] = [
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "_id",
+                    foreignField: "_id",
+                    as: "user",
+                },
+            },
+            { $unwind: "$user" },
+
+            // Compute number of bookings
+            {
+                $addFields: {
+                    bookingsCount: { $size: { $ifNull: ["$bookings", []] } },
+                },
+            },
+
+            ...(Object.keys(match).length > 0 ? [{ $match: match }] : []),
+
+            { $sort: sortObj },
+            { $skip: skip },
+            { $limit: limit },
+        ];
+
+        const data = await TouristModel.aggregate(pipeline);
+
+        /* ---------------------- TOTAL COUNT QUERY ----------------------- */
+        const total = await TouristModel.aggregate([
+            pipeline[0], // lookup
+            pipeline[1], // unwind
+            pipeline[2], // addFields
+            ...(Object.keys(match).length > 0 ? [{ $match: match }] : []),
+            { $count: "total" },
+        ]);
+
+        return {
+            data,
+            meta: {
+                page,
+                limit,
+                total: total[0]?.total || 0,
+                totalPage: Math.ceil((total[0]?.total || 0) / limit),
+            },
+        };
+    },
 
 
     // SEND VERIFICATION REQUEST ------ (GUIDE ENDPOINT)
@@ -240,6 +288,7 @@ export const UserServices = {
         };
     },
 
+
     // TOURIST REGISTRATION ------ (TOURIST ENDPOINT)
     async registerTourist(payload: Partial<ITourist>) {
         const user = await this.createBaseUser(payload);
@@ -264,6 +313,7 @@ export const UserServices = {
 
         return guide;
     },
+
 
     // UPDATE USER PROFILE BY ID ------ (USER ENDPOINT)
     async updateProfile(userId: string, payload: Partial<IUser | ITourist | IGuide | any>) {
@@ -347,6 +397,7 @@ export const UserServices = {
             data: userInfo
         }
     },
+
 
     // UPDATE SINGLE USER ------ (ADMIN ENDPOINT)
     async updateSingleUser(userId: string, payload: Partial<IUser | IGuide | any>) {

@@ -57,5 +57,21 @@ export const AuthController = {
             message: "User Logged Out Successfully",
             data: null,
         })
+    }),
+
+    // USER PASSWORD CHANGE ------
+    changePassword: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        const oldPassword = req.body.oldPassword;
+        const newPassword = req.body.newPassword;
+        const decodedToken = req.user;
+
+        await AuthServices.changePassword(oldPassword, newPassword, decodedToken as JwtPayload);
+
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Password Changed Successfully",
+            data: null,
+        })
     })
 };

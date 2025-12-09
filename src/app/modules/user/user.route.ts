@@ -16,7 +16,7 @@ router.get("/my-profile", checkAuth(...Object.values(TUserRole)), UserController
 router.get('/all-guides', checkAuth(TUserRole.ADMIN), UserController.getAllGuides);
 
 // GET ALL Tourists ------ (ADMIN ENDPOINT)
-// router.get('/all-tourists', checkAuth(TUserRole.ADMIN), UserController.getAllTourists);
+router.get('/all-tourists', checkAuth(TUserRole.ADMIN), UserController.getAllTourists);
 
 // SEND VERIFICATION REQUEST ------ (GUIDE ENDPOINT)
 router.post('/send-verify', checkAuth(TUserRole.GUIDE), UserController.sendVerifyReq);

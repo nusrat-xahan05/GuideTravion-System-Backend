@@ -4,6 +4,8 @@ import { UserModel } from "../user/user.model";
 import httpStatus from "http-status";
 import bcryptjs from "bcryptjs"
 import { createUserTokens } from "../../utils/userToken";
+import { envVars } from "../../config/env";
+import { JwtPayload } from "jsonwebtoken";
 
 
 
@@ -63,4 +65,20 @@ export const AuthServices = {
             user: rest
         }
     },
+
+    // USER PASSWORD CHANGE ------
+    async changePassword(oldPassword: string, newPassword: string, decodedToken: JwtPayload) {
+        const user = await UserModel.findById(decodedToken.userId);
+        if (!user) {
+            throw new AppError(httpStatus.BAD_REQUEST, "User Does Not Exist");
+        }
+        const isOldPasswordMatched = await bcryptjs.compare(oldPassword, user.password as string);
+
+        if (!isOldPasswordMatched) {
+            throw new AppError(httpStatus.UNAUTHORIZED, "Old Password Incorrect");
+        }
+
+        user.password = await bcryptjs.hash(newPassword, Number(envVars.BCRYPT_SALT_ROUND));
+        user.save();
+    }
 };

@@ -18,5 +18,8 @@ router.post("/login", validateRequest(userLoginSchema), AuthController.credentia
 // USER LOGOUT ------
 router.post("/logout", AuthController.logout);
 
+// USER PASSWORD CHANGE ------
+router.post('/change-password', checkAuth(...Object.values(TUserRole)), AuthController.changePassword);
+
 
 export const AuthRoutes = router
