@@ -1,6 +1,19 @@
 import { z } from "zod";
 import { TTourDifficultyLevel, TTourStatus, TTourStatusByAdmin, TTourType } from "./tour.interface";
 
+
+
+// Itinerary validation
+const itinerarySchema = z.object({
+    day: z.number().min(1, "Day number must be at least 1"),
+    title: z.string().min(3, "Itinerary title is required"),
+    description: z.string().min(5, "Itinerary description is required"),
+    activities: z.array(z.string()).optional(),
+    startTime: z.string().optional(),
+    endTime: z.string().optional(),
+});
+
+// Tour validation
 export const createTourSchema = z.object({
     title: z
         .string({
@@ -9,7 +22,7 @@ export const createTourSchema = z.object({
                     ? "Title is Required"
                     : "Title Must Be a String",
         })
-        .min(3, { message: "Title is Too Short" })
+        .min(3, { message: "Title Must 3 Characters Long" })
         .max(100, { message: "Title is Too Long" }),
 
     description: z
@@ -18,19 +31,25 @@ export const createTourSchema = z.object({
         })
         .min(20, { message: "Description Must Be At Least 20 Characters" }),
 
-    tourType: z.enum(
-        Object.values(TTourType) as [TTourType, ...TTourType[]],
-        { error: "Invalid Tour Type" }
-    ),
+    slug: z.string().optional(),
 
-    difficultyLevel: z.enum(
-        Object.values(TTourDifficultyLevel) as [TTourDifficultyLevel, ...TTourDifficultyLevel[]],
-        { error: "Invalid Tour Level" }
-    ).optional()
+    tourType: z
+        .array(
+            z.enum(
+                Object.values(TTourType) as [TTourType, ...TTourType[]],
+                {
+                    message: "Tour Type is Required"
+                }
+            )
+        )
+        .min(1, { message: "Select at least one tour type" }),
+
+    difficultyLevel: z.enum(TTourDifficultyLevel)
         .default(TTourDifficultyLevel.EASY),
 
     tags: z.array(z.string().min(1, "Tag cannot be empty")).optional(),
     status: z.enum(TTourStatus).default(TTourStatus.ACTIVE),
+
 
     location: z
         .string({
@@ -49,14 +68,6 @@ export const createTourSchema = z.object({
             error: "Duration Must Be a Number",
         })
         .min(1, "Duration Must Be At Least 1 Day"),
-
-    startDate: z
-        .string().optional()
-        .or(z.date().optional()),
-
-    endDate: z
-        .string().optional()
-        .or(z.date().optional()),
 
     meetingTime: z.string().optional(),
     pickupLocation: z.string().optional(),
@@ -77,14 +88,18 @@ export const createTourSchema = z.object({
     minAge: z.number().optional(),
 
     highlights: z
-        .array(z.string().min(3, "Highlight Too Short"))
+        .array(z.string())
         .min(1, "At Least One Highlight is Required"),
 
     images: z.array(z.string()).optional(),
-
     includes: z.array(z.string()).optional(),
     excludes: z.array(z.string()).optional(),
+    itinerary: z.array(itinerarySchema).optional(),
 
     createdBy: z.string().optional(),
-    statusByAdmin: z.enum(TTourStatusByAdmin).default(TTourStatusByAdmin.PENDING),
+    statusByAdmin: z.enum(TTourStatusByAdmin).default(TTourStatusByAdmin.REQ_SEND),
+    averageRating: z.number().optional(),
+    totalReviews: z.number().optional(),
 });
+
+

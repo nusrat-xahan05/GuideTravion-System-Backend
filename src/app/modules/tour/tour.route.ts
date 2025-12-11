@@ -10,25 +10,31 @@ const router = Router();
 
 
 // CREATE TOUR ------ (GUIDE ENDPOINT)
-router.post("/create-tour", checkAuth(TUserRole.GUIDE), multerUpload.array("files"), validateRequest(createTourSchema), TourController.createTour);
+router.post("/create-tour", checkAuth(TUserRole.ADMIN, TUserRole.GUIDE), multerUpload.array("files"), validateRequest(createTourSchema), TourController.createTour);
+
+// GET ALL TOUR(BY ADMIN) ------ (ADMIN ENDPOINT)
+router.get("/all-tours", checkAuth(TUserRole.ADMIN), TourController.getAllTours);
 
 // GET ALL TOUR(BY EACH) ------ (GUIDE ENDPOINT)
 router.get("/my-tours", checkAuth(TUserRole.GUIDE), TourController.getMyTours);
 
-// GET ALL PENDING TOUR ------ (ADMIN ENDPOINT)
-router.get("/pending",checkAuth(TUserRole.ADMIN),TourController.getPendingTours);
+// // GET ALL PENDING TOUR ------ (ADMIN ENDPOINT)
+// router.get("/pending",checkAuth(TUserRole.ADMIN),TourController.getPendingTours);
 
-// GET ALL APPROVED TOUR ------ (PUBLIC ENDPOINT)
-router.get("/", TourController.getAllApprovedTours);
+// // GET ALL APPROVED TOUR ------ (PUBLIC ENDPOINT)
+// router.get("/", TourController.getAllApprovedTours);
 
-// GET SINGLE APPROVED TOUR ------ (PUBLIC ENDPOINT)
+// GET SINGLE TOUR ------ (ADMIN, GUIDE ENDPOINT)
 router.get("/:slug", TourController.getSingleTour);
 
-// UPDATE TOUR ------ (GUIDE ENDPOINT)
-router.patch("/update/:slug", checkAuth(TUserRole.GUIDE), multerUpload.array("files"), validateRequest(createTourSchema), TourController.updateTour);
+// // GET SINGLE APPROVED TOUR ------ (PUBLIC ENDPOINT)
+// router.get("/:slug", TourController.getSingleTour);
 
-// APPROVE/REJECT A TOUR ------ (ADMIN ENDPOINT)
-router.patch("/tour-approval/:slug", checkAuth(TUserRole.ADMIN), TourController.tourApproval);
+// // UPDATE TOUR ------ (GUIDE ENDPOINT)
+// router.patch("/update/:slug", checkAuth(TUserRole.GUIDE), multerUpload.array("files"), validateRequest(createTourSchema), TourController.updateTour);
+
+// // APPROVE/REJECT A TOUR ------ (ADMIN ENDPOINT)
+// router.patch("/tour-approval/:slug", checkAuth(TUserRole.ADMIN), TourController.tourApproval);
 
 
 
