@@ -136,6 +136,86 @@ export const UserServices = {
         };
     },
 
+    // GET ALL PENDING GUIDES TO VERIFY THEM ------ (ADMIN ENDPOINT)
+    async getAllPendingGuides(query: Record<string, string>) {
+        const page = Number(query.page) || 1;
+        const limit = Number(query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const searchTerm = query.searchTerm || "";
+
+        const searchConditions: any[] = [];
+        if (searchTerm) {
+            searchConditions.push(
+                { "user.email": { $regex: searchTerm, $options: "i" } },
+            );
+        }
+
+        const filterConditions: any[] = [];
+
+        Object.keys(query).forEach(key => {
+            if (["page", "limit", "sort", "searchTerm"].includes(key)) return;
+
+            if (key.startsWith("_id.")) {
+                const userField = key.split(".")[1];
+                filterConditions.push({
+                    [`user.${userField}`]: query[key]
+                });
+            } else {
+                filterConditions.push({ [key]: query[key] });
+            }
+        });
+
+        filterConditions.push(
+            { verificationRequest: TVerificationReqStatus.PENDING },
+            { "user.userStatus": TUserStatus.ACTIVE }
+        );
+
+        const match: any = {};
+        if (searchConditions.length > 0) match.$or = searchConditions;
+        if (filterConditions.length > 0) match.$and = filterConditions;
+
+        const pipeline: PipelineStage[] = [
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "_id",
+                    foreignField: "_id",
+                    as: "user",
+                },
+            },
+            { $unwind: "$user" },
+            ...(Object.keys(match).length > 0 ? [{ $match: match }] : []),
+            {
+                $sort: {
+                    [query.sort || "rating"]: query.sort?.startsWith("-") ? -1 : 1,
+                },
+            },
+
+            { $skip: skip },
+            { $limit: limit },
+        ];
+
+        const data = await GuideModel.aggregate(pipeline);
+
+        const total = await GuideModel.aggregate([
+            pipeline[0], // lookup
+            pipeline[1], // unwind
+            ...(Object.keys(match).length > 0 ? [{ $match: match }] : []),
+            { $count: "total" }
+        ]);
+
+        return {
+            data,
+            meta: {
+                page,
+                limit,
+                total: total[0]?.total || 0,
+                totalPage: Math.ceil((total[0]?.total || 0) / limit),
+            },
+        };
+    },
+
 
     // GET ALL Tourists ------ (ADMIN ENDPOINT)
     async getAllTourists(query: Record<string, string>) {
@@ -368,7 +448,32 @@ export const UserServices = {
         };
     },
 
+    // APPROVE/REJECT GUIDE VERIFICATION STATUS ------ (ADMIN ENDPOINT)
+    async verifyGuideController(userId: string, payload: Partial<IGuide>) {
+        const { verificationRequest } = payload;
 
+        let isVerifiedByAdmin;
+        if (verificationRequest === TVerificationReqStatus.APPROVED) {
+            isVerifiedByAdmin = true;
+        }
+        else {
+            isVerifiedByAdmin = false;
+        }
+
+        const updatedInfo = await GuideModel.findByIdAndUpdate(
+            userId,
+            {
+                verificationRequest,
+                isVerifiedByAdmin
+            }, { new: true, runValidators: true }
+        );
+
+        return {
+            data: updatedInfo
+        }
+    },
+
+    
     // GET SINGLE USER BY ADMIN ------
     async getSingleUser(userId: string) {
         const userInfo = await UserModel.findById(userId).select("-password").lean();

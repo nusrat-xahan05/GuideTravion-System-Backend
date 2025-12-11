@@ -34,6 +34,20 @@ export const UserController = {
         })
     }),
 
+    // GET ALL PENDING GUIDES TO VERIFY THEM ------ (ADMIN ENDPOINT)
+    getAllPendingGuides: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        const query = req.query;
+        const result = await UserServices.getAllPendingGuides(query as Record<string, string>);
+
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Guides Retrieved Successfully",
+            data: result.data,
+            meta: result.meta
+        })
+    }),
+
     // GET ALL Tourists ------ (ADMIN ENDPOINT)
     getAllTourists: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
         const query = req.query;
@@ -103,6 +117,18 @@ export const UserController = {
         })
     }),
 
+    // APPROVE/REJECT GUIDE VERIFICATION STATUS ------ (ADMIN ENDPOINT)
+    verifyGuideController: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        const userId = req.params.id;
+        const result = await UserServices.verifyGuideController(userId, req.body);
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.CREATED,
+            message: "Status Updated Successfully",
+            data: result.data
+        })
+    }),
+    
     // GET SINGLE USER ------
     getSingleUser: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
         const userId = req.params.id;

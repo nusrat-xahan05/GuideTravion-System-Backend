@@ -15,6 +15,9 @@ router.get("/my-profile", checkAuth(...Object.values(TUserRole)), UserController
 // GET ALL Guides ------ (ADMIN ENDPOINT)
 router.get('/all-guides', checkAuth(TUserRole.ADMIN), UserController.getAllGuides);
 
+// GET ALL PENDING GUIDES TO VERIFY THEM ------ (ADMIN ENDPOINT)
+router.get('/verify-guides', checkAuth(TUserRole.ADMIN), UserController.getAllPendingGuides);
+
 // GET ALL Tourists ------ (ADMIN ENDPOINT)
 router.get('/all-tourists', checkAuth(TUserRole.ADMIN), UserController.getAllTourists);
 
@@ -37,6 +40,10 @@ router.patch("/update-profile", checkAuth(...Object.values(TUserRole)), multerUp
 
     return validateRequest(schema)(req, res, next);
 }, UserController.updateProfile);
+
+
+// APPROVE/REJECT GUIDE VERIFICATION STATUS ------ (ADMIN ENDPOINT)
+router.patch("/:id/verify", checkAuth(TUserRole.ADMIN), UserController.verifyGuideController);
 
 // GET SINGLE USER ------ (ADMIN ENDPOINT)
 router.get("/:id", checkAuth(TUserRole.ADMIN), UserController.getSingleUser);
