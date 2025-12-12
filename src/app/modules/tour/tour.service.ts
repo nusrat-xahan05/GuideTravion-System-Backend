@@ -4,8 +4,6 @@ import { JwtPayload } from "jsonwebtoken";
 import AppError from "../../errorHelpers/AppError";
 import httpStatus from "http-status";
 import { generateUniqueSlug } from "../../utils/generateSlug";
-// import { QueryBuilder } from "../../utils/queryBuilder";
-// import { tourSearchableFields, tourSearchableFieldsByAdmin } from "./tour.constant";
 import { TUserRole, TVerificationReqStatus } from "../user/user.interface";
 import { GuideModel } from "../user/user.model";
 import { ITourQuery, TourQueryHelper } from "../../utils/tourQueryHelper";
@@ -91,26 +89,31 @@ export const TourServices = {
     },
 
 
-    // // GET ALL PENDING TOUR ------ (ADMIN ENDPOINT)
-    // async getPendingTours(query: Record<string, string>) {
-    //     const queryBuilder = new QueryBuilder(TourModel.find({ statusByAdmin: TTourStatusByAdmin.PENDING }).sort("-createdAt"), query)
-    //     const toursData = queryBuilder
-    //         .filter()
-    //         .search(tourSearchableFieldsByAdmin)
-    //         .sort()
-    //         .fields()
-    //         .paginate();
+    // GET ALL PENDING TOUR ------ (ADMIN ENDPOINT)
+    async getAllPendingTours(query: ITourQuery) {
+        const helper = new TourQueryHelper(query);
 
-    //     const [data, meta] = await Promise.all([
-    //         toursData.build(),
-    //         queryBuilder.getMeta()
-    //     ])
+        const { pipeline, pagination } = helper.build();
 
-    //     return {
-    //         data,
-    //         meta
-    //     }
-    // },
+        // Insert condition at the start of pipeline
+        pipeline.unshift({
+            $match: { statusByAdmin: "PENDING" }
+        });
+
+        // total count
+        const totalPipeline = [...pipeline, { $count: "total" }];
+        const totalRes = await TourModel.aggregate(totalPipeline);
+        const total = totalRes[0]?.total || 0;
+
+        // data
+        const finalPipeline = [...pipeline, ...pagination.stage];
+        const data = await TourModel.aggregate(finalPipeline);
+
+        return {
+            data,
+            meta: TourQueryHelper.calcMeta(total, pagination.page, pagination.limit)
+        };
+    },
 
 
     // // GET ALL APPROVED TOUR ------ (PUBLIC ENDPOINT)
@@ -147,19 +150,6 @@ export const TourServices = {
         return tour;
     },
 
-    // async getSingleTour(slug: string) {
-    //     const tour = await TourModel.findOne({
-    //         slug,
-    //         statusByAdmin: TTourStatusByAdmin.APPROVED
-    //     });
-
-    //     if (!tour) {
-    //         throw new AppError(httpStatus.NOT_FOUND, "Tour not found or not approved yet");
-    //     }
-
-    //     return tour;
-    // },
-
     // // UPDATE TOUR ------ (GUIDE ENDPOINT)
     // async updateTour(slug: string, guideId: string, payload: Partial<ITour>) {
     //     const tour = await TourModel.findOne({ slug });
@@ -183,17 +173,37 @@ export const TourServices = {
     //     return updatedTour;
     // },
 
-    // // APPROVE/REJECT A TOUR ------ (ADMIN ENDPOINT)
-    // async tourApproval(slug: string, payload: Partial<ITour>) {
-    //     const tour = await TourModel.findOne({ slug });
-    //     if (!tour) throw new AppError(httpStatus.NOT_FOUND, "Tour not found");
+    // APPROVE/REJECT A TOUR ------ (ADMIN ENDPOINT)
+    async verifyTour(slug: string, payload: Partial<ITour>) {
+        const tour = await TourModel.findOne({ slug });
+        if (!tour) throw new AppError(httpStatus.NOT_FOUND, "Tour not found");
 
-    //     const updatedTour = await TourModel.findOneAndUpdate(
-    //         { slug },
-    //         { statusByAdmin: payload.statusByAdmin },
-    //         { new: true }
-    //     );
+        const updatedTour = await TourModel.findOneAndUpdate(
+            { slug },
+            { statusByAdmin: payload.statusByAdmin },
+             {new: true, runValidators: true}
+        );
 
-    //     return updatedTour;
-    // },
+        return updatedTour;
+    },
+
+
+    // SEND VERIFY REQ------ (GUIDE ENDPOINT)
+    async sendTourVerifyReq(slug: string) {
+        const tour = await TourModel.findOne({
+            slug
+        });
+
+        if (!tour) {
+            throw new AppError(httpStatus.NOT_FOUND, "Tour not found or not approved yet");
+        }
+
+        const updatedTour = await TourModel.findOneAndUpdate(
+            { slug },
+            { statusByAdmin: TTourStatusByAdmin.PENDING },
+            {new: true, runValidators: true}
+        )
+
+        return updatedTour;
+    },
 };

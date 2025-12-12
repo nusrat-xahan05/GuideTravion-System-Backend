@@ -55,18 +55,18 @@ export const TourController = {
         });
     }),
 
-    // // GET ALL PENDING TOUR ------ (ADMIN ENDPOINT)
-    // getPendingTours: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    //     const query = req.query;
-    //     const result = await TourServices.getPendingTours(query as Record<string, string>);
+    // GET ALL PENDING TOUR ------ (ADMIN ENDPOINT)
+    getAllPendingTours: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        const query = req.query;
+        const result = await TourServices.getAllPendingTours(query as Record<string, string>);
 
-    //     sendResponse(res, {
-    //         statusCode: httpStatus.OK,
-    //         success: true,
-    //         message: "Pending tours retrieved",
-    //         data: result,
-    //     });
-    // }),
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Pending tours retrieved",
+            data: result,
+        });
+    }),
 
     // // GET ALL APPROVED TOUR ------ (PUBLIC ENDPOINT)
     // getAllApprovedTours: catchAsync(async (req: Request, res: Response) => {
@@ -82,7 +82,7 @@ export const TourController = {
     // }),
 
     // GET SINGLE APPROVED TOUR ------ (PUBLIC ENDPOINT)
-    getSingleTour: catchAsync(async (req: Request, res: Response) => {
+    getSingleTour: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
         const result = await TourServices.getSingleTour(req.params.slug);
 
         sendResponse(res, {
@@ -113,16 +113,27 @@ export const TourController = {
     //     });
     // }),
 
+    // APPROVE/REJECT A TOUR ------ (ADMIN ENDPOINT)
+    verifyTour: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        const result = await TourServices.verifyTour(req.params.slug, req.body);
 
-    // // APPROVE/REJECT A TOUR ------ (ADMIN ENDPOINT)
-    // tourApproval: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    //     const result = await TourServices.tourApproval(req.params.slug, req.body);
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Tour approved successfully",
+            data: result,
+        });
+    }),
 
-    //     sendResponse(res, {
-    //         statusCode: httpStatus.OK,
-    //         success: true,
-    //         message: "Tour approved successfully",
-    //         data: result,
-    //     });
-    // }),
+    // SEND VERIFY REQ------ (GUIDE ENDPOINT)
+    sendTourVerifyReq: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        const result = await TourServices.sendTourVerifyReq(req.params.slug);
+
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Request Send Successfully",
+            data: result,
+        });
+    }),
 };

@@ -16,7 +16,7 @@ router.get("/my-profile", checkAuth(...Object.values(TUserRole)), UserController
 router.get('/all-guides', checkAuth(TUserRole.ADMIN), UserController.getAllGuides);
 
 // GET ALL PENDING GUIDES TO VERIFY THEM ------ (ADMIN ENDPOINT)
-router.get('/verify-guides', checkAuth(TUserRole.ADMIN), UserController.getAllPendingGuides);
+router.get('/pending-guides', checkAuth(TUserRole.ADMIN), UserController.getAllPendingGuides);
 
 // GET ALL Tourists ------ (ADMIN ENDPOINT)
 router.get('/all-tourists', checkAuth(TUserRole.ADMIN), UserController.getAllTourists);

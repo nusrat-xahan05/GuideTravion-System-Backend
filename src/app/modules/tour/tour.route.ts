@@ -18,8 +18,8 @@ router.get("/all-tours", checkAuth(TUserRole.ADMIN), TourController.getAllTours)
 // GET ALL TOUR(BY EACH) ------ (GUIDE ENDPOINT)
 router.get("/my-tours", checkAuth(TUserRole.GUIDE), TourController.getMyTours);
 
-// // GET ALL PENDING TOUR ------ (ADMIN ENDPOINT)
-// router.get("/pending",checkAuth(TUserRole.ADMIN),TourController.getPendingTours);
+// GET ALL PENDING TOURS TO VERIFY THEM ------ (ADMIN ENDPOINT)
+router.get('/pending-tours', checkAuth(TUserRole.ADMIN), TourController.getAllPendingTours);
 
 // // GET ALL APPROVED TOUR ------ (PUBLIC ENDPOINT)
 // router.get("/", TourController.getAllApprovedTours);
@@ -33,8 +33,12 @@ router.get("/:slug", TourController.getSingleTour);
 // // UPDATE TOUR ------ (GUIDE ENDPOINT)
 // router.patch("/update/:slug", checkAuth(TUserRole.GUIDE), multerUpload.array("files"), validateRequest(createTourSchema), TourController.updateTour);
 
-// // APPROVE/REJECT A TOUR ------ (ADMIN ENDPOINT)
-// router.patch("/tour-approval/:slug", checkAuth(TUserRole.ADMIN), TourController.tourApproval);
+// SEND VERIFY REQ------ (GUIDE ENDPOINT)
+router.patch("/:slug/send-verify-req", checkAuth(TUserRole.GUIDE), TourController.sendTourVerifyReq);
+
+// APPROVE/REJECT A TOUR ------ (ADMIN ENDPOINT)
+router.patch("/:slug/verify-tour", checkAuth(TUserRole.ADMIN), TourController.verifyTour);
+
 
 
 
