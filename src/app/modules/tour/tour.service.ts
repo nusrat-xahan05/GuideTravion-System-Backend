@@ -4,7 +4,7 @@ import { JwtPayload } from "jsonwebtoken";
 import AppError from "../../errorHelpers/AppError";
 import httpStatus from "http-status";
 import { generateUniqueSlug } from "../../utils/generateSlug";
-import { TUserRole, TVerificationReqStatus } from "../user/user.interface";
+import { TUserRole, TUserStatus, TVerificationReqStatus } from "../user/user.interface";
 import { GuideModel } from "../user/user.model";
 import { ITourQuery, TourQueryHelper } from "../../utils/tourQueryHelper";
 
@@ -116,26 +116,31 @@ export const TourServices = {
     },
 
 
-    // // GET ALL APPROVED TOUR ------ (PUBLIC ENDPOINT)
-    // async getAllApprovedTours(query: Record<string, string>) {
-    //     const queryBuilder = new QueryBuilder(TourModel.find({ statusByAdmin: TTourStatusByAdmin.APPROVED, status: "ACTIVE" }).sort("-createdAt"), query)
-    //     const toursData = queryBuilder
-    //         .filter()
-    //         .search(tourSearchableFields)
-    //         .sort()
-    //         .fields()
-    //         .paginate();
+    // GET ALL APPROVED TOUR ------ (PUBLIC ENDPOINT)
+    async getAllApprovedTours(query: ITourQuery) {
+        const helper = new TourQueryHelper(query);
 
-    //     const [data, meta] = await Promise.all([
-    //         toursData.build(),
-    //         queryBuilder.getMeta()
-    //     ])
+        const { pipeline, pagination } = helper.build();
 
-    //     return {
-    //         data,
-    //         meta
-    //     }
-    // },
+        // Insert condition at the start of pipeline
+        pipeline.unshift({
+            $match: { status: TUserStatus.ACTIVE, statusByAdmin: TTourStatusByAdmin.APPROVED }
+        });
+
+        // total count
+        const totalPipeline = [...pipeline, { $count: "total" }];
+        const totalRes = await TourModel.aggregate(totalPipeline);
+        const total = totalRes[0]?.total || 0;
+
+        // data
+        const finalPipeline = [...pipeline, ...pagination.stage];
+        const data = await TourModel.aggregate(finalPipeline);
+
+        return {
+            data,
+            meta: TourQueryHelper.calcMeta(total, pagination.page, pagination.limit)
+        };
+    },
 
     // GET SINGLE APPROVED TOUR ------ (PUBLIC ENDPOINT)
     async getSingleTour(slug: string) {
@@ -182,7 +187,7 @@ export const TourServices = {
         const updatedTour = await TourModel.findOneAndUpdate(
             { slug },
             { statusByAdmin: payload.statusByAdmin },
-             {new: true, runValidators: true}
+            { new: true, runValidators: true }
         );
 
         return updatedTour;
@@ -202,7 +207,7 @@ export const TourServices = {
         const updatedTour = await TourModel.findOneAndUpdate(
             { slug },
             { statusByAdmin: TTourStatusByAdmin.PENDING },
-            {new: true, runValidators: true}
+            { new: true, runValidators: true }
         )
 
         return updatedTour;

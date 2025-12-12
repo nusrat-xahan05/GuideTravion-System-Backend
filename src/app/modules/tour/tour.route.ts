@@ -21,8 +21,8 @@ router.get("/my-tours", checkAuth(TUserRole.GUIDE), TourController.getMyTours);
 // GET ALL PENDING TOURS TO VERIFY THEM ------ (ADMIN ENDPOINT)
 router.get('/pending-tours', checkAuth(TUserRole.ADMIN), TourController.getAllPendingTours);
 
-// // GET ALL APPROVED TOUR ------ (PUBLIC ENDPOINT)
-// router.get("/", TourController.getAllApprovedTours);
+// GET ALL APPROVED TOUR ------ (PUBLIC ENDPOINT)
+router.get("/", TourController.getAllApprovedTours);
 
 // GET SINGLE TOUR ------ (ADMIN, GUIDE ENDPOINT)
 router.get("/:slug", TourController.getSingleTour);

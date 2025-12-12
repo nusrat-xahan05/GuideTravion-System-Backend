@@ -26,6 +26,7 @@ export const TourController = {
         })
     }),
 
+
     // GET ALL TOUR(BY ADMIN) ------ (ADMIN ENDPOINT)
     getAllTours: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
         const query = req.query;
@@ -39,6 +40,7 @@ export const TourController = {
             meta: result.meta
         });
     }),
+
 
     // GET ALL TOUR(BY EACH) ------ (GUIDE ENDPOINT)
     getMyTours: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -55,6 +57,7 @@ export const TourController = {
         });
     }),
 
+    
     // GET ALL PENDING TOUR ------ (ADMIN ENDPOINT)
     getAllPendingTours: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
         const query = req.query;
@@ -68,18 +71,20 @@ export const TourController = {
         });
     }),
 
-    // // GET ALL APPROVED TOUR ------ (PUBLIC ENDPOINT)
-    // getAllApprovedTours: catchAsync(async (req: Request, res: Response) => {
-    //     const query = req.query;
-    //     const result = await TourServices.getAllApprovedTours(query as Record<string, string>);
 
-    //     sendResponse(res, {
-    //         statusCode: httpStatus.OK,
-    //         success: true,
-    //         message: "Tours fetched successfully",
-    //         data: result,
-    //     });
-    // }),
+    // GET ALL APPROVED TOUR ------ (PUBLIC ENDPOINT)
+    getAllApprovedTours: catchAsync(async (req: Request, res: Response) => {
+        const query = req.query;
+        const result = await TourServices.getAllApprovedTours(query as Record<string, string>);
+
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Tours fetched successfully",
+            data: result,
+        });
+    }),
+
 
     // GET SINGLE APPROVED TOUR ------ (PUBLIC ENDPOINT)
     getSingleTour: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -92,6 +97,7 @@ export const TourController = {
             data: result,
         });
     }),
+
 
     // UPDATE TOUR ------ (GUIDE ENDPOINT)
     updateTour: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -113,6 +119,7 @@ export const TourController = {
         });
     }),
 
+
     // APPROVE/REJECT A TOUR ------ (ADMIN ENDPOINT)
     verifyTour: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
         const result = await TourServices.verifyTour(req.params.slug, req.body);
@@ -124,6 +131,7 @@ export const TourController = {
             data: result,
         });
     }),
+
 
     // SEND VERIFY REQ------ (GUIDE ENDPOINT)
     sendTourVerifyReq: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
