@@ -93,25 +93,25 @@ export const TourController = {
         });
     }),
 
-    // // UPDATE TOUR ------ (GUIDE ENDPOINT)
-    // updateTour: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    //     const slug = req.params.slug;
-    //     const decodedToken = req.user as JwtPayload;
+    // UPDATE TOUR ------ (GUIDE ENDPOINT)
+    updateTour: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        const slug = req.params.slug;
+        const decodedToken = req.user as JwtPayload;
 
-    //     const updatedData = {
-    //         ...req.body,
-    //         images: (req.files as Express.Multer.File[]).map(file => file.path)
-    //     };
+        const updatedData = {
+            ...req.body,
+            images: (req.files as Express.Multer.File[]).map(file => file.path)
+        };
 
-    //     const result = await TourServices.updateTour(slug, decodedToken.userId, updatedData);
+        const result = await TourServices.updateTour(slug, decodedToken.userId, updatedData);
 
-    //     sendResponse(res, {
-    //         statusCode: httpStatus.OK,
-    //         success: true,
-    //         message: "Tour updated successfully (awaiting re-approval)",
-    //         data: result,
-    //     });
-    // }),
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Tour updated successfully (awaiting re-approval)",
+            data: result,
+        });
+    }),
 
     // APPROVE/REJECT A TOUR ------ (ADMIN ENDPOINT)
     verifyTour: catchAsync(async (req: Request, res: Response, next: NextFunction) => {

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { validateRequest } from "../../middlewares/validateRequest";
-import { createTourSchema } from "./tour.validation";
+import { createTourSchema, updateTourSchema } from "./tour.validation";
 import { checkAuth } from "../../middlewares/checkAuth";
 import { TUserRole } from "../user/user.interface";
 import { TourController } from "./tour.controller";
@@ -31,7 +31,7 @@ router.get("/:slug", TourController.getSingleTour);
 // router.get("/:slug", TourController.getSingleTour);
 
 // // UPDATE TOUR ------ (GUIDE ENDPOINT)
-// router.patch("/update/:slug", checkAuth(TUserRole.GUIDE), multerUpload.array("files"), validateRequest(createTourSchema), TourController.updateTour);
+router.patch("/update/:slug", checkAuth(TUserRole.GUIDE), multerUpload.array("files"), validateRequest(updateTourSchema), TourController.updateTour);
 
 // SEND VERIFY REQ------ (GUIDE ENDPOINT)
 router.patch("/:slug/send-verify-req", checkAuth(TUserRole.GUIDE), TourController.sendTourVerifyReq);

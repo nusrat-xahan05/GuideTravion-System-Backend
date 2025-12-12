@@ -150,28 +150,29 @@ export const TourServices = {
         return tour;
     },
 
-    // // UPDATE TOUR ------ (GUIDE ENDPOINT)
-    // async updateTour(slug: string, guideId: string, payload: Partial<ITour>) {
-    //     const tour = await TourModel.findOne({ slug });
-    //     if (!tour) {
-    //         throw new AppError(httpStatus.NOT_FOUND, "Tour not found");
-    //     }
+    // UPDATE TOUR ------ (GUIDE ENDPOINT)
+    async updateTour(slug: string, guideId: string, payload: Partial<ITour>) {
+        const tour = await TourModel.findOne({ slug });
+        if (!tour) {
+            throw new AppError(httpStatus.NOT_FOUND, "Tour not found");
+        }
 
-    //     if (tour.createdBy?.toString() !== guideId) {
-    //         throw new AppError(httpStatus.FORBIDDEN, "Not authorized to update this tour");
-    //     }
+        if (tour.createdBy?.toString() !== guideId) {
+            throw new AppError(httpStatus.FORBIDDEN, "Not authorized to update this tour");
+        }
 
-    //     // Reset approval status
-    //     tour.statusByAdmin = TTourStatusByAdmin.PENDING;
+        // Reset approval status
+        // tour.statusByAdmin = TTourStatusByAdmin.REQ_SEND;
 
-    //     // Add new images
-    //     if (payload.images && payload.images.length > 0 && tour.images && tour.images.length > 0) {
-    //         payload.images = [...payload.images, ...tour.images]
-    //     }
+        // Add new images
+        if (payload.images && payload.images.length > 0 && tour.images && tour.images.length > 0) {
+            payload.images = [...payload.images, ...tour.images]
+        }
 
-    //     const updatedTour = await TourModel.findOneAndUpdate({ slug }, payload, { new: true });
-    //     return updatedTour;
-    // },
+        const updatedTour = await TourModel.findOneAndUpdate({ slug }, payload, { new: true, runValidators: true });
+        return updatedTour;
+    },
+
 
     // APPROVE/REJECT A TOUR ------ (ADMIN ENDPOINT)
     async verifyTour(slug: string, payload: Partial<ITour>) {

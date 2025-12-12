@@ -103,3 +103,42 @@ export const createTourSchema = z.object({
 });
 
 
+// Update Tour validation
+export const updateTourSchema = z.object({
+    description: z
+        .string({
+            error: "Description Must Be a String",
+        })
+        .min(20, { message: "Description Must Be At Least 20 Characters" }),
+
+    tourType: z
+        .array(
+            z.enum(
+                Object.values(TTourType) as [TTourType, ...TTourType[]],
+                {
+                    message: "Tour Type is Required"
+                }
+            )
+        )
+        .min(1, { message: "Select at least one tour type" }),
+
+    difficultyLevel: z.enum(TTourDifficultyLevel)
+        .default(TTourDifficultyLevel.EASY),
+
+    tags: z.array(z.string().min(1, "Tag cannot be empty")).optional(),
+    status: z.enum(TTourStatus).default(TTourStatus.ACTIVE),
+
+    pickupLocation: z.string().optional(),
+    dropoffLocation: z.string().optional(),
+
+    highlights: z
+        .array(z.string())
+        .min(1, "At Least One Highlight is Required"),
+
+    images: z.array(z.string()).optional(),
+    includes: z.array(z.string()).optional(),
+    excludes: z.array(z.string()).optional(),
+    itinerary: z.array(itinerarySchema).optional(),
+});
+
+
