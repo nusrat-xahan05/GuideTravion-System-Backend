@@ -1,42 +1,61 @@
-// import { Request, Response } from "express";
-// import { envVars } from "../../config/env";
-// import { catchAsync } from "../../utils/catchAsync";
-// import { sendResponse } from "../../utils/sendResponse";
-// import { SSLService } from "../sslCommerz/sslCommerz.service";
-// import { PaymentService } from "./payment.service";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { NextFunction, Request, Response } from "express"
+import { PaymentService } from "./payment.service";
+import httpStatus from "http-status";
+import { catchAsync } from "../../utils/catchAsync";
+import { JwtPayload } from "jsonwebtoken";
+import { sendResponse } from "../../utils/sendResponse";
+import { envVars } from "../../config/env";
 
-// const initPayment = catchAsync(async (req: Request, res: Response) => {
-//     const bookingId = req.params.bookingId;
-//     const result = await PaymentService.initPayment(bookingId as string)
-//     sendResponse(res, {
-//         statusCode: 201,
-//         success: true,
-//         message: "Payment done successfully",
-//         data: result,
-//     });
-// });
-// const successPayment = catchAsync(async (req: Request, res: Response) => {
-//     const query = req.query
-//     const result = await PaymentService.successPayment(query as Record<string, string>)
+export const PaymentController = {
+    initiatePayment: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        const { bookingId } = req.body;
+        const decodedToken = req.user as JwtPayload;
 
-//     if (result.success) {
-//         res.redirect(`${envVars.SSL.SSL_SUCCESS_FRONTEND_URL}?transactionId=${query.transactionId}&message=${result.message}&amount=${query.amount}&status=${query.status}`)
-//     }
-// });
+        const result = await PaymentService.initiatePayment(bookingId, decodedToken);
+
+        // res.status(httpStatus.OK).json({
+        //     success: true,
+        //     paymentUrl: result.paymentUrl,
+        // });
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Payment done successfully",
+            // data: result,
+            data: result.paymentUrl
+        });
+    }),
+
+
+    paymentSuccess: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            await PaymentService.handleSuccess(req.body);
+            res.redirect(`${envVars.SSL.SSL_SUCCESS_FRONTEND_URL}`);
+        } catch {
+            res.redirect(`${envVars.SSL.SSL_FAIL_FRONTEND_URL}`);
+        }
+    }),
+
+
+    paymentFail: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        await PaymentService.handleFailure(req.body);
+        res.redirect(`${envVars.SSL.SSL_FAIL_FRONTEND_URL}`);
+    }),
+
+
+    paymentCancel: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        await PaymentService.handleCancel(req.body);
+        res.redirect(`${envVars.SSL.SSL_CANCEL_FRONTEND_URL}/payment-cancelled`);
+    }),
+};
+
 // const failPayment = catchAsync(async (req: Request, res: Response) => {
 //     const query = req.query
 //     const result = await PaymentService.failPayment(query as Record<string, string>)
 
 //     if (!result.success) {
 //         res.redirect(`${envVars.SSL.SSL_FAIL_FRONTEND_URL}?transactionId=${query.transactionId}&message=${result.message}&amount=${query.amount}&status=${query.status}`)
-//     }
-// });
-// const cancelPayment = catchAsync(async (req: Request, res: Response) => {
-//     const query = req.query
-//     const result = await PaymentService.cancelPayment(query as Record<string, string>)
-
-//     if (!result.success) {
-//         res.redirect(`${envVars.SSL.SSL_CANCEL_FRONTEND_URL}?transactionId=${query.transactionId}&message=${result.message}&amount=${query.amount}&status=${query.status}`)
 //     }
 // });
 
@@ -64,51 +83,3 @@
 //         });
 //     }
 // );
-
-// export const PaymentController = {
-//     initPayment,
-//     successPayment,
-//     failPayment,
-//     cancelPayment,
-//     getInvoiceDownloadUrl,
-//     validatePayment
-// };
-
-
-// payment.controller.ts
-import { PaymentService } from "./payment.service";
-
-export const PaymentController = {
-    initiatePayment: async (req, res) => {
-        try {
-            const { bookingId } = req.body;
-            const result = await PaymentService.initiatePayment(bookingId, req.user);
-
-            res.json({
-                success: true,
-                url: result.paymentUrl,
-            });
-        } catch (error: any) {
-            res.status(400).json({ success: false, message: error.message });
-        }
-    },
-
-    paymentSuccess: async (req, res) => {
-        try {
-            const result = await PaymentService.verifySuccess(req.body);
-            res.redirect(`${process.env.FRONTEND_URL}/payment-success`);
-        } catch (error: any) {
-            res.redirect(`${process.env.FRONTEND_URL}/payment-failed`);
-        }
-    },
-
-    paymentFail: async (req, res) => {
-        const result = await PaymentService.verifyFailed(req.body);
-        res.redirect(`${process.env.FRONTEND_URL}/payment-failed`);
-    },
-
-    paymentCancel: async (req, res) => {
-        const result = await PaymentService.verifyCancelled(req.body);
-        res.redirect(`${process.env.FRONTEND_URL}/payment-cancelled`);
-    },
-};

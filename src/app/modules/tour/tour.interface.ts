@@ -92,11 +92,7 @@ export interface ITour {
   }[];
 
   // Admin & Guide Info
-  createdBy: {
-    type: Types.ObjectId,
-    ref: "Guide",
-    required: true
-  }  // guideId
+  createdBy: Types.ObjectId;
   statusByAdmin: TTourStatusByAdmin;
 
   // Ratings

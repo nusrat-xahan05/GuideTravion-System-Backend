@@ -8,8 +8,7 @@ import httpStatus from "http-status";
 
 export const AvailabilityController = {
     check: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-        const { tourId } = req.params; // or req.query.tourId
-        const { start, end } = req.query; // ISO date strings expected
+        const { tourId, start, end } = req.query; // ISO date strings expected
 
         const result = await AvailabilityService.checkGuideAvailability(
             tourId as string,
@@ -18,9 +17,9 @@ export const AvailabilityController = {
         );
 
         sendResponse(res, {
-            statusCode: httpStatus.CREATED,
+            statusCode: httpStatus.OK,
             success: true,
-            message: "Booking created successfully",
+            message: "Availability Checked Successfully",
             data: result,
         })
     }),

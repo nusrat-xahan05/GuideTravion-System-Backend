@@ -1,30 +1,30 @@
-// /* eslint-disable @typescript-eslint/no-explicit-any */
-// import { Types } from "mongoose";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Types } from "mongoose";
 
-// export enum PAYMENT_STATUS {
-//     PAID = "PAID",
-//     UNPAID = "UNPAID",
-//     CANCELLED = "CANCELLED",
-//     FAILED = "FAILED",
-//     REFUNDED = "REFUNDED"
-// }
 
-// export interface IPayment {
-//     booking: Types.ObjectId;
-//     transactionId: string;
-//     amount: number;
-//     paymentGatewayData?: any
-//     invoiceUrl?: string
-//     status: PAYMENT_STATUS
-// }
-
-// payment.interface.ts
-export type TPaymentStatus = "INITIATED" | "SUCCESS" | "FAILED" | "CANCELLED";
+export enum TPaymentStatus {
+    INITIATED = "INITIATED",
+    PAID = "PAID",
+    UNPAID = "UNPAID",
+    FAILED = "FAILED",
+    CANCELLED = "CANCELLED",
+    REFUNDED = "REFUNDED",
+}
 
 export interface IPayment {
-    bookingId: string;
+    _id?: Types.ObjectId;
+    bookingId: Types.ObjectId;
+
+    transactionId: string;          // SSLCommerz tran_id
+    validationId?: string;          // val_id from SSLCommerz
+
     amount: number;
-    currency: string;
-    transactionId: string;
+    currency: "BDT";
     status: TPaymentStatus;
+
+    gatewayResponse?: any;           // Raw SSL response (audit/debug)
+    paidAt?: Date;
+
+    createdAt?: Date;
+    updatedAt?: Date;
 }

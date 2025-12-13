@@ -7,6 +7,7 @@ import { JwtPayload } from "jsonwebtoken";
 import { TourServices } from "./tour.service";
 import { ITour } from "./tour.interface";
 
+
 export const TourController = {
     // CREATE TOUR ------ (GUIDE ENDPOINT)
     createTour: catchAsync(async (req: Request, res: Response, next: NextFunction) => {

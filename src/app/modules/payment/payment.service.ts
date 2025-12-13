@@ -1,61 +1,153 @@
-// /* eslint-disable @typescript-eslint/no-explicit-any */
-// import httpStatus from "http-status-codes";
-// import { uploadBufferToCloudinary } from "../../config/cloudinary.config";
-// import AppError from "../../errorHelpers/AppError";
-// import { generatePdf, IInvoiceData } from "../../utils/invoice";
-// import { sendEmail } from "../../utils/sendEmail";
-// import { BOOKING_STATUS } from "../booking/booking.interface";
-// import { Booking } from "../booking/booking.model";
-// import { ISSLCommerz } from "../sslCommerz/sslCommerz.interface";
-// import { SSLService } from "../sslCommerz/sslCommerz.service";
-// import { ITour } from "../tour/tour.interface";
-// import { IUser } from "../user/user.interface";
-// import { PAYMENT_STATUS } from "./payment.interface";
-// import { Payment } from "./payment.model";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import axios from "axios";
+import mongoose from "mongoose";
+import { BookingModel } from "../booking/booking.model";
+import { PaymentModel } from "./payment.model";
+import { TPaymentStatus } from "./payment.interface";
+import { TBookingStatus } from "../booking/booking.interface";
+import httpStatus from "http-status";
+import { JwtPayload } from "jsonwebtoken";
+import { getTransactionId } from "../../utils/getTransactionId";
+import AppError from "../../errorHelpers/AppError";
+import { envVars } from "../../config/env";
+import { UserModel } from "../user/user.model";
 
 
+export const PaymentService = {
+    // ================= INITIATE PAYMENT =================
+    async initiatePayment(bookingId: string, decodedToken: JwtPayload) {
+        const booking = await BookingModel.findById(bookingId);
+        if (!booking) {
+            throw new AppError(httpStatus.NOT_FOUND, "Booking Not Found");
+        }
+        if (booking.paymentStatus === TPaymentStatus.PAID) {
+            throw new AppError(httpStatus.BAD_REQUEST, "Booking Already Paid");
+        }
+        if (booking.expiresAt && booking.expiresAt < new Date()) {
+            throw new AppError(httpStatus.BAD_REQUEST, "Booking Expired");
+        }
 
-// const initPayment = async (bookingId: string) => {
+        const existingPayment = await PaymentModel.findOne({
+            bookingId,
+            status: TPaymentStatus.INITIATED,
+        });
+        if (existingPayment) {
+            throw new AppError(httpStatus.BAD_REQUEST, "Payment already initiated for this booking");
+        }
 
-//     const payment = await Payment.findOne({ booking: bookingId })
+        const transactionId = getTransactionId()
+        // const transactionId = `TXN-${Date.now()}`;
 
-//     if (!payment) {
-//         throw new AppError(httpStatus.NOT_FOUND, "Payment Not Found. You have not booked this tour")
-//     }
+        await PaymentModel.create({
+            bookingId,
+            transactionId,
+            amount: booking.totalAmount,
+            currency: "BDT",
+            status: TPaymentStatus.INITIATED,
+        });
 
-//     const booking = await Booking.findById(payment.booking)
+        const userInfo = await UserModel.findById(decodedToken.userId);
+        if (!userInfo) {
+            throw new AppError(httpStatus.NOT_FOUND, "User Not Found");
+        }
 
-//     const userAddress = (booking?.user as any).address
-//     const userEmail = (booking?.user as any).email
-//     const userPhoneNumber = (booking?.user as any).phone
-//     const userName = (booking?.user as any).name
+        const payload = {
+            store_id: envVars.SSL.SSL_STORE_ID as string,
+            store_passwd: envVars.SSL.SSL_STORE_PASS as string,
+            total_amount: booking.totalAmount.toString(),
+            currency: "BDT",
+            tran_id: transactionId,
 
-//     const sslPayload: ISSLCommerz = {
-//         address: userAddress,
-//         email: userEmail,
-//         phoneNumber: userPhoneNumber,
-//         name: userName,
-//         amount: payment.amount,
-//         transactionId: payment.transactionId
-//     }
+            success_url: `${envVars.SSL.SSL_SUCCESS_BACKEND_URL}`,
+            fail_url: `${envVars.SSL.SSL_FAIL_BACKEND_URL}`,
+            cancel_url: `${envVars.SSL.SSL_CANCEL_BACKEND_URL}`,
 
-//     const sslPayment = await SSLService.sslPaymentInit(sslPayload)
+            // success_url: `${envVars.SSL.SSL_SUCCESS_BACKEND_URL}?transactionId=${transactionId}&amount=${booking.totalAmount}&status=success`,
+            // fail_url: `${envVars.SSL.SSL_FAIL_BACKEND_URL}?transactionId=${transactionId}&amount=${booking.totalAmount}&status=fail`,
+            // cancel_url: `${envVars.SSL.SSL_CANCEL_BACKEND_URL}?transactionId=${transactionId}&amount=${booking.totalAmount}&status=cancel`,
 
-//     return {
-//         paymentUrl: sslPayment.GatewayPageURL
-//     }
+            cus_name: userInfo.firstName,
+            cus_email: userInfo.email,
+            cus_phone: userInfo.phone || "0000000000",
+            cus_address: userInfo.address || " ",
+            cus_country: userInfo.country,
 
-// };
+            product_name: "Tour Booking",
+            product_profile: "general",
+        };
+
+        // const response = await axios({
+        //     method: "POST",
+        //     url: envVars.SSL.SSL_PAYMENT_API,
+        //     data: data,
+        //     headers: { "Content-Type": "application/x-www-form-urlencoded" }
+        // })
+
+        const response = await axios.post(
+            "https://sandbox.sslcommerz.com/gwprocess/v4/api.php",
+            new URLSearchParams(payload).toString(),
+            { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+        );
+
+        if (!response.data?.GatewayPageURL) {
+            throw new AppError(httpStatus.BAD_REQUEST, "SSL session failed");
+        }
+        return { paymentUrl: response.data.GatewayPageURL };
+    },
+
+
+    // ================= PAYMENT SUCCESS =================
+    async handleSuccess(payload: any) {
+        const { tran_id, val_id } = payload;
+
+        const session = await mongoose.startSession();
+        session.startTransaction();
+
+        try {
+            const updatedPayment = await PaymentModel.findOneAndUpdate({ transactionId: tran_id }, {
+                status: TPaymentStatus.PAID,
+                validationId: val_id,
+                paidAt: new Date(),
+                gatewayResponse: payload
+            }, { new: true, runValidators: true, session: session })
+
+            if (!updatedPayment) throw new Error("Payment not found");
+
+            await BookingModel.findByIdAndUpdate(updatedPayment.bookingId,
+                {
+                    paymentStatus: TPaymentStatus.PAID,
+                    status: TBookingStatus.CONFIRMED,
+                }, { new: true, runValidators: true, session });
+
+            await session.commitTransaction();
+        } catch (err) {
+            await session.abortTransaction();
+            throw err;
+        } finally {
+            session.endSession();
+        }
+    },
+
+    // ================= PAYMENT FAILED =================
+    async handleFailure(payload: any) {
+        const { tran_id } = payload;
+
+        await PaymentModel.findOneAndUpdate({ transactionId: tran_id }, {
+            status: TPaymentStatus.FAILED,
+            gatewayResponse: payload
+        }, { new: true, runValidators: true });
+    },
+
+    // ================= PAYMENT CANCELLED =================
+    async handleCancel(payload: any) {
+        const { tran_id } = payload;
+
+        await PaymentModel.findOneAndUpdate({ transactionId: tran_id }, {
+            status: TPaymentStatus.CANCELLED, gatewayResponse: payload
+        }, { new: true, runValidators: true });
+    },
+};
 // const successPayment = async (query: Record<string, string>) => {
-
-//     // Update Booking Status to COnfirm 
-//     // Update Payment Status to PAID
-
-//     const session = await Booking.startSession();
-//     session.startTransaction()
-
-//     try {
-
 
 //         const updatedPayment = await Payment.findOneAndUpdate({ transactionId: query.transactionId }, {
 //             status: PAYMENT_STATUS.PAID,
@@ -121,70 +213,7 @@
 //         throw error
 //     }
 // };
-// const failPayment = async (query: Record<string, string>) => {
 
-//     // Update Booking Status to FAIL
-//     // Update Payment Status to FAIL
-
-//     const session = await Booking.startSession();
-//     session.startTransaction()
-
-//     try {
-
-
-//         const updatedPayment = await Payment.findOneAndUpdate({ transactionId: query.transactionId }, {
-//             status: PAYMENT_STATUS.FAILED,
-//         }, { new: true, runValidators: true, session: session })
-
-//         await Booking
-//             .findByIdAndUpdate(
-//                 updatedPayment?.booking,
-//                 { status: BOOKING_STATUS.FAILED },
-//                 { runValidators: true, session }
-//             )
-
-//         await session.commitTransaction(); //transaction
-//         session.endSession()
-//         return { success: false, message: "Payment Failed" }
-//     } catch (error) {
-//         await session.abortTransaction(); // rollback
-//         session.endSession()
-//         // throw new AppError(httpStatus.BAD_REQUEST, error) ❌❌
-//         throw error
-//     }
-// };
-// const cancelPayment = async (query: Record<string, string>) => {
-
-//     // Update Booking Status to CANCEL
-//     // Update Payment Status to CANCEL
-
-//     const session = await Booking.startSession();
-//     session.startTransaction()
-
-//     try {
-
-
-//         const updatedPayment = await Payment.findOneAndUpdate({ transactionId: query.transactionId }, {
-//             status: PAYMENT_STATUS.CANCELLED,
-//         }, { runValidators: true, session: session })
-
-//         await Booking
-//             .findByIdAndUpdate(
-//                 updatedPayment?.booking,
-//                 { status: BOOKING_STATUS.CANCEL },
-//                 { runValidators: true, session }
-//             )
-
-//         await session.commitTransaction(); //transaction
-//         session.endSession()
-//         return { success: false, message: "Payment Cancelled" }
-//     } catch (error) {
-//         await session.abortTransaction(); // rollback
-//         session.endSession()
-//         // throw new AppError(httpStatus.BAD_REQUEST, error) ❌❌
-//         throw error
-//     }
-// };
 
 // const getInvoiceDownloadUrl = async (paymentId: string) => {
 //     const payment = await Payment.findById(paymentId)
@@ -200,128 +229,3 @@
 
 //     return payment.invoiceUrl
 // };
-
-
-// export const PaymentService = {
-//     initPayment,
-//     successPayment,
-//     failPayment,
-//     cancelPayment,
-//     getInvoiceDownloadUrl
-// };
-
-
-
-// payment.service.ts
-import axios from "axios";
-import { PaymentModel } from "./payment.model";
-import { BookingModel } from "../booking/booking.model";
-import mongoose from "mongoose";
-
-export const PaymentService = {
-    async initiatePayment(bookingId: string, user: any) {
-        const booking = await BookingModel.findById(bookingId)
-            .populate("tourId")
-            .lean();
-
-        if (!booking) throw new Error("Booking not found");
-        if (booking.status === "PAID") throw new Error("Already paid");
-
-        const transactionId = `TXN-${Date.now()}`;
-
-        const payment = await PaymentModel.create({
-            bookingId,
-            amount: booking.totalPrice,
-            currency: "BDT",
-            transactionId,
-            status: "INITIATED",
-        });
-
-        // SSLCommerz payload
-        const payload = {
-            store_id: process.env.SSLC_STORE_ID!,
-            store_passwd: process.env.SSLC_STORE_PASS!,
-            total_amount: booking.totalPrice,
-            currency: "BDT",
-            tran_id: transactionId,
-            success_url: `${process.env.BASE_URL}/api/payment/success`,
-            fail_url: `${process.env.BASE_URL}/api/payment/fail`,
-            cancel_url: `${process.env.BASE_URL}/api/payment/cancel`,
-            emi_option: 0,
-
-            // Customer Information
-            cus_name: user.name,
-            cus_email: user.email,
-            cus_add1: "Dhaka",
-            cus_country: "Bangladesh",
-            cus_phone: user.phone || "00000000",
-
-            product_name: "Tour Booking",
-            product_category: "Tour",
-            product_profile: "general",
-        };
-
-        const response = await axios({
-            method: "POST",
-            url: "https://sandbox.sslcommerz.com/gwprocess/v4/api.php",
-            data: payload,
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        });
-
-        if (!response.data.GatewayPageURL)
-            throw new Error("SSLCommerz session creation failed");
-
-        return { paymentUrl: response.data.GatewayPageURL };
-    },
-
-    async verifySuccess(data: any) {
-        const { tran_id } = data;
-
-        const session = await mongoose.startSession();
-        session.startTransaction();
-
-        try {
-            const payment = await PaymentModel.findOne({ transactionId: tran_id });
-            if (!payment) throw new Error("Payment not found");
-
-            payment.status = "SUCCESS";
-            await payment.save({ session });
-
-            await BookingModel.findByIdAndUpdate(
-                payment.bookingId,
-                { status: "PAID" },
-                { session }
-            );
-
-            await session.commitTransaction();
-            return { message: "Payment Successful" };
-        } catch (e) {
-            await session.abortTransaction();
-            throw e;
-        } finally {
-            session.endSession();
-        }
-    },
-
-    async verifyFailed(data: any) {
-        const { tran_id } = data;
-
-        await PaymentModel.findOneAndUpdate(
-            { transactionId: tran_id },
-            { status: "FAILED" }
-        );
-
-        return { message: "Payment Failed" };
-    },
-
-    async verifyCancelled(data: any) {
-        const { tran_id } = data;
-
-        await PaymentModel.findOneAndUpdate(
-            { transactionId: tran_id },
-            { status: "CANCELLED" }
-        );
-
-        return { message: "Payment Cancelled" };
-    },
-};
