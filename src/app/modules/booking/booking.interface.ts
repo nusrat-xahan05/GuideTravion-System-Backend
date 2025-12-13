@@ -41,10 +41,15 @@ export interface IBooking {
 
     status: TBookingStatus;
     cancelledBy?: TCancelledBy;
-    expiresAt: Date;
+    expiresAt?: Date | null;
 
     notes?: string;
     createdAt?: Date;
     updatedAt?: Date;
+}
+
+export interface Pagination {
+    page: number;
+    limit: number;
 }
 

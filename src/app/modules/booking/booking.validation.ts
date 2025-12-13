@@ -1,13 +1,12 @@
 import { z } from "zod";
-import { TPaymentMethod } from "./booking.interface";
 
 
 export const createBookingSchema = z.object({
     tourId: z.string().min(1, "Tour is required"),
-    date: z.string().refine((s) => !Number.isNaN(Date.parse(s)), { message: "Invalid date" }),
+    startDate: z.string().refine((s) => !Number.isNaN(Date.parse(s)), { message: "Invalid date" }),
+    endDate: z.string().refine((s) => !Number.isNaN(Date.parse(s)), { message: "Invalid date" }),
     persons: z.preprocess((v) => Number(v), z.number().min(1, "At least one person required")),
     // guestCount: z.number().int().positive()
-    paymentMethod: z.enum(TPaymentMethod).optional(),
     meetingTime: z.string().optional(),
     pickupLocation: z.string().optional(),
     dropoffLocation: z.string().optional(),

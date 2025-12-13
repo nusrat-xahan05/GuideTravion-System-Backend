@@ -8,7 +8,7 @@ const router = express.Router();
 
 
 // Tourist initiates payment
-router.post("/init", checkAuth(TUserRole.TOURIST), PaymentController.initiatePayment);
+router.post("/init", checkAuth(...Object.values(TUserRole)), PaymentController.initiatePayment);
 
 // SSLCommerz callbacks
 router.post("/success", PaymentController.paymentSuccess);

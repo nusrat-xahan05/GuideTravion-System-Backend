@@ -1,77 +1,85 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { TourModel } from "../tour/tour.model";
 import { BookingModel } from "../booking/booking.model";
 import { TUserStatus } from "../user/user.interface";
 import { UserModel } from "../user/user.model";
 import { TBookingStatus } from "../booking/booking.interface";
-import { Types } from "mongoose";
+import { AvailabilityResult } from "./checkAvailability.interface";
 
 
-
-export type AvailabilityResult =
-    | { available: true; guideId: Types.ObjectId; message: string }
-    | { available: false; guideId: Types.ObjectId; reason: string; conflictingBooking?: any };
 
 export const AvailabilityService = {
-    checkGuideAvailability: async (tourId: string, startIn: Date | string, endIn: Date | string): Promise<AvailabilityResult> => {
-        // 0. Validate inputs and normalize to Date
-        const start = startIn instanceof Date ? startIn : new Date(String(startIn));
-        const end = endIn instanceof Date ? endIn : new Date(String(endIn));
+    checkGuideAvailability: async (
+        tourId: string,
+        startIn: Date | string,
+        endIn: Date | string,
+        persons: number
+    ): Promise<AvailabilityResult> => {
 
-        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-            throw new Error("Invalid start or end date provided.");
-        }
-        if (start > end) {
-            throw new Error("Start date must be before or equal to end date.");
+        const start = new Date(startIn);
+        const end = new Date(endIn);
+
+        if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) {
+            throw new Error("Invalid booking dates");
         }
 
-        // 1. Find tour and its assigned guide id
-        const tour = await TourModel.findById(tourId).select("createdBy title").lean();
-        if (!tour) {
-            throw new Error("Tour not found");
+        if (!persons || persons <= 0) {
+            throw new Error("Invalid number of persons");
         }
+
+        // 1️⃣ Tour
+        const tour = await TourModel.findById(tourId)
+            .select("createdBy maxGroupSize")
+            .lean();
+
+        if (!tour) throw new Error("Tour not found");
 
         const guideId = tour.createdBy;
-        if (!guideId) {
-            throw new Error("Tour has no assigned guide");
-        }
 
-        // 2. Ensure the guide's user exists and is ACTIVE
-        // Note: guideId is the Guide document _id which equals the corresponding User _id in your schema design
-        const guideUser = await UserModel.findById(guideId).select("userStatus isVerified firstName email").lean();
-        if (!guideUser) {
-            throw new Error("Guide (user) not found");
-        }
-        if (guideUser.userStatus !== TUserStatus.ACTIVE) {
-            throw new Error("Guide is not active");
-        }
+        // 2️⃣ Guide status
+        const guideUser = await UserModel.findById(guideId)
+            .select("userStatus")
+            .lean();
 
-        // 3. Check for overlapping CONFIRMED bookings only (PENDING does NOT block)
-        const overlapping = await BookingModel.findOne({
-            guideId: guideId,
-            status: { $in: [TBookingStatus.CONFIRMED] }, // only confirmed bookings block availability
-            $or: [
-                {
-                    startDate: { $lte: end },
-                    endDate: { $gte: start }
-                }
-            ]
-        }).lean();
-
-        if (overlapping) {
+        if (!guideUser || guideUser.userStatus !== TUserStatus.ACTIVE) {
             return {
                 available: false,
-                guideId: new Types.ObjectId(String(guideId)),
-                reason: "Guide is busy in another confirmed booking during this time.",
-                conflictingBooking: overlapping
+                guideId,
+                remainingSeats: 0,
+                reason: "Guide is not active",
             };
         }
 
-        // 4. No conflicts -> available
+        // 3️⃣ Overlapping bookings (CONFIRMED + PENDING)
+        const bookings = await BookingModel.find({
+            guideId,
+            status: { $in: [TBookingStatus.CONFIRMED] },
+            startDate: { $lte: end },
+            endDate: { $gte: start },
+        }).lean();
+
+        const bookedPersons = bookings.reduce(
+            (sum, b) => sum + (b.persons || 0),
+            0
+        );
+
+        const maxSeats = tour.maxGroupSize || 1;
+        const remainingSeats = Math.max(maxSeats - bookedPersons, 0);
+
+        // 4️⃣ Capacity check
+        if (remainingSeats < persons) {
+            return {
+                available: false,
+                guideId,
+                remainingSeats,
+                reason: `Only ${remainingSeats} seat(s) left`,
+            };
+        }
+
         return {
             available: true,
-            guideId: new Types.ObjectId(String(guideId)),
-            message: "Guide is available for the selected dates."
+            guideId,
+            remainingSeats,
+            message: "Guide is available for selected dates",
         };
-    }
+    },
 };

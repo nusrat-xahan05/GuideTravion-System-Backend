@@ -27,13 +27,13 @@ export const PaymentService = {
             throw new AppError(httpStatus.BAD_REQUEST, "Booking Expired");
         }
 
-        const existingPayment = await PaymentModel.findOne({
-            bookingId,
-            status: TPaymentStatus.INITIATED,
-        });
-        if (existingPayment) {
-            throw new AppError(httpStatus.BAD_REQUEST, "Payment already initiated for this booking");
-        }
+        // const existingPayment = await PaymentModel.findOne({
+        //     bookingId,
+        //     status: TPaymentStatus.INITIATED,
+        // });
+        // if (existingPayment) {
+        //     throw new AppError(httpStatus.BAD_REQUEST, "Payment already initiated for this booking");
+        // }
 
         const transactionId = getTransactionId()
         // const transactionId = `TXN-${Date.now()}`;
@@ -54,6 +54,7 @@ export const PaymentService = {
         const payload = {
             store_id: envVars.SSL.SSL_STORE_ID as string,
             store_passwd: envVars.SSL.SSL_STORE_PASS as string,
+            // ipn_url: envVars.SSL.SSL_IPN_URL,
             total_amount: booking.totalAmount.toString(),
             currency: "BDT",
             tran_id: transactionId,
@@ -66,14 +67,29 @@ export const PaymentService = {
             // fail_url: `${envVars.SSL.SSL_FAIL_BACKEND_URL}?transactionId=${transactionId}&amount=${booking.totalAmount}&status=fail`,
             // cancel_url: `${envVars.SSL.SSL_CANCEL_BACKEND_URL}?transactionId=${transactionId}&amount=${booking.totalAmount}&status=cancel`,
 
-            cus_name: userInfo.firstName,
-            cus_email: userInfo.email,
-            cus_phone: userInfo.phone || "0000000000",
-            cus_address: userInfo.address || " ",
-            cus_country: userInfo.country,
+            cus_name: userInfo?.firstName || "default",
+            cus_email: userInfo?.email || "default@gmail.com",
+            cus_phone: userInfo?.phone || "0000000000",
+            cus_add1: userInfo?.address || "BG",
+            cus_add2: "N/A",
+            cus_city: "N/A",
+            cus_state: "N/A",
+            cus_postcode: "N/A",
+            cus_fax: "01711111111",
+            cus_country: userInfo?.country || "BG",
 
             product_name: "Tour Booking",
+            product_category: "Service",
             product_profile: "general",
+
+            shipping_method: "N/A",
+            ship_name: "N/A",
+            ship_add1: "N/A",
+            ship_add2: "N/A",
+            ship_city: "N/A",
+            ship_state: "N/A",
+            ship_postcode: '1000',
+            ship_country: "N/A",
         };
 
         // const response = await axios({
@@ -88,6 +104,8 @@ export const PaymentService = {
             new URLSearchParams(payload).toString(),
             { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
         );
+        console.log('from respinse 1: ', response);
+        console.log('from respinse 2: ', response.data);
 
         if (!response.data?.GatewayPageURL) {
             throw new AppError(httpStatus.BAD_REQUEST, "SSL session failed");

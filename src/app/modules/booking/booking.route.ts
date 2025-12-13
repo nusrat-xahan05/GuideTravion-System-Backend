@@ -14,16 +14,15 @@ router.post("/", checkAuth(...Object.values(TUserRole)), validateRequest(createB
 // List bookings (admin/guide/tourist filters)
 router.get("/", checkAuth(TUserRole.ADMIN, TUserRole.GUIDE), BookingController.listBookings);
 
-// // router.get("/my-bookings",checkAuth(...Object.values(Role)),BookingController.getUserBookings);
+router.get("/my-bookings",checkAuth(...Object.values(TUserRole)),BookingController.getUserBookings);
 
-// // Get single booking
-// router.get("/:id", checkAuth(...Object.values(TUserRole)), BookingController.getBooking);
+// Get single booking
+router.get("/:id", checkAuth(...Object.values(TUserRole)), BookingController.getBooking);
 
-// // Cancel booking
-// router.patch("/:id/cancel", checkAuth(), BookingController.cancelBooking);
+// router.patch("/:bookingId/status", checkAuth(...Object.values(TUserRole)), BookingController.updateBookingStatus);
+
+// Cancel booking
+router.patch("/:id/cancel", checkAuth(), BookingController.cancelBooking);
 
 export const BookingRoutes = router;
 
-
-// // api/v1/booking/bookingId/status
-// router.patch("/:bookingId/status", checkAuth(...Object.values(Role)),validateRequest(updateBookingStatusZodSchema), BookingController.updateBookingStatus);
