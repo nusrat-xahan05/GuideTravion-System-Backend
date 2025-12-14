@@ -18,6 +18,7 @@ export interface ITourQuery {
     limit?: string;
 
     tourType?: string;
+    division?: string;
     difficultyLevel?: string;
     statusByAdmin?: string;
     status?: string;
@@ -120,6 +121,9 @@ export class TourQueryHelper {
         if (this.query.statusByAdmin) filter.statusByAdmin = this.query.statusByAdmin;
 
         if (this.query.createdBy) filter.createdBy = new mongoose.Types.ObjectId(this.query.createdBy);
+        if (this.query.division) {
+        filter.division = { $regex: this.query.division, $options: "i" };
+    }
         // if (this.query.createdBy) filter.createdBy = this.query.createdBy;
 
 

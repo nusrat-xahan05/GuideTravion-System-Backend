@@ -21,6 +21,9 @@ router.get("/my-tours", checkAuth(TUserRole.GUIDE), TourController.getMyTours);
 // GET ALL ACTIVE+APPROVED TOURS(BY EACH) ------ (GUIDE ENDPOINT)
 router.get("/my-active-tours", checkAuth(TUserRole.GUIDE), TourController.getMyActiveTours);
 
+// GET TOP 6 TOURS ------ (PUBLIC ENDPOINT)
+router.get("/top-tours", TourController.getTopTours);
+
 // GET ALL PENDING TOURS TO VERIFY THEM ------ (ADMIN ENDPOINT)
 router.get('/pending-tours', checkAuth(TUserRole.ADMIN), TourController.getAllPendingTours);
 

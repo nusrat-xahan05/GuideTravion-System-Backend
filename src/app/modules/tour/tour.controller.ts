@@ -74,7 +74,21 @@ export const TourController = {
         });
     }),
 
-    
+
+    // GET TOP 6 TOURS ------ (PUBLIC ENDPOINT)
+    getTopTours: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        const limit = Number(req.query.limit) || 3;
+        const result = await TourServices.getTopTours(limit);
+
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Top Tours retrieved ",
+            data: result
+        });
+    }),
+
+
     // GET ALL PENDING TOUR ------ (ADMIN ENDPOINT)
     getAllPendingTours: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
         const query = req.query;

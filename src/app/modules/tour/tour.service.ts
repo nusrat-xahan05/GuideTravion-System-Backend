@@ -7,6 +7,8 @@ import { generateUniqueSlug } from "../../utils/generateSlug";
 import { TUserRole, TUserStatus, TVerificationReqStatus } from "../user/user.interface";
 import { GuideModel } from "../user/user.model";
 import { ITourQuery, TourQueryHelper } from "../../utils/tourQueryHelper";
+import { tourCreatorLookupPipeline } from "../../utils/tourCreatorLookupPipeline";
+import { PipelineStage } from "mongoose";
 
 
 export const TourServices = {
@@ -97,6 +99,34 @@ export const TourServices = {
             status: TTourStatus.ACTIVE,
             statusByAdmin: TTourStatusByAdmin.APPROVED
         });
+    },
+
+    // GET TOP 6 TOURS ------ (PUBLIC ENDPOINT)
+    async getTopTours(limit = 3) {
+        const pipeline: PipelineStage[] = [
+            {
+                $match: {
+                    status: TTourStatus.ACTIVE,
+                    statusByAdmin: TTourStatusByAdmin.APPROVED
+                }
+            },
+
+            {
+                $sort: {
+                    averageRating: -1,
+                    totalReviews: -1,
+                    pricePerPerson: 1
+                }
+            },
+
+            { $limit: limit },
+
+            ...tourCreatorLookupPipeline
+        ];
+
+        const data = await TourModel.aggregate(pipeline);
+
+        return data;
     },
 
 
@@ -197,18 +227,6 @@ export const TourServices = {
 
         return tour[0];
     },
-
-    // async getSingleTour(slug: string) {
-    //     const tour = await TourModel.findOne({
-    //         slug
-    //     });
-
-    //     if (!tour) {
-    //         throw new AppError(httpStatus.NOT_FOUND, "Tour not found or not approved yet");
-    //     }
-
-    //     return tour;
-    // },
 
     // UPDATE TOUR ------ (GUIDE ENDPOINT)
     async updateTour(slug: string, guideId: string, payload: Partial<ITour>) {
