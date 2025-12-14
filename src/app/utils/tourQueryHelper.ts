@@ -2,9 +2,17 @@
 // tourQueryHelper.ts
 import mongoose, { PipelineStage } from "mongoose";
 
+
+export type TourSortField =
+    | "durationDays"
+    | "pricePerPerson"
+    | "rating"
+    | "averageRating"
+    | "createdAt";
+
 export interface ITourQuery {
     search?: string;
-    sortBy?: string;
+    sortBy?: TourSortField;
     sortOrder?: "asc" | "desc";
     page?: string;
     limit?: string;
@@ -12,6 +20,7 @@ export interface ITourQuery {
     tourType?: string;
     difficultyLevel?: string;
     statusByAdmin?: string;
+    status?: string;
 
     // used for getMyTour
     createdBy?: string;
@@ -48,6 +57,9 @@ export class TourQueryHelper {
                                 occupation: 1,
                                 rating: 1,
                                 totalReviews: 1,
+                                yearsOfExperience: 1,
+                                city: 1,
+                                expertise: 1
                             }
                         }
                     ]
@@ -104,6 +116,7 @@ export class TourQueryHelper {
 
         if (this.query.tourType) filter.tourType = this.query.tourType;
         if (this.query.difficultyLevel) filter.difficultyLevel = this.query.difficultyLevel;
+        if (this.query.status) filter.status = this.query.status;
         if (this.query.statusByAdmin) filter.statusByAdmin = this.query.statusByAdmin;
 
         if (this.query.createdBy) filter.createdBy = new mongoose.Types.ObjectId(this.query.createdBy);
@@ -117,15 +130,26 @@ export class TourQueryHelper {
      * SORT
      * ---------------------------*/
     private buildSort(): PipelineStage | null {
-        const field = this.query.sortBy;
-        if (!field) return null;
+        if (!this.query.sortBy) return null;
 
-        const order = this.query.sortOrder === "asc" ? 1 : -1;
+        const order: 1 | -1 = this.query.sortOrder === "asc" ? 1 : -1;
+
+        const sortMap: Record<string, string> = {
+            durationDays: "durationDays",
+            pricePerPerson: "pricePerPerson",
+            rating: "rating",
+            averageRating: "averageRating",
+            createdAt: "createdAt",
+        };
+
+        const field = sortMap[this.query.sortBy];
+
+        if (!field) return null;
 
         return {
             $sort: {
-                [field]: order
-            }
+                [field]: order,
+            },
         };
     }
 

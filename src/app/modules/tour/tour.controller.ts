@@ -58,6 +58,22 @@ export const TourController = {
         });
     }),
 
+
+    // GET ALL ACTIVE+APPROVED TOURS(BY EACH) ------ (GUIDE ENDPOINT)
+    getMyActiveTours: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        const decodedToken = req.user as JwtPayload;
+        const query = req.query;
+        const result = await TourServices.getMyActiveTours(decodedToken.userId, query as Record<string, string>);
+
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "My active tours retrieved successfully",
+            data: result.data,
+            meta: result.meta
+        });
+    }),
+
     
     // GET ALL PENDING TOUR ------ (ADMIN ENDPOINT)
     getAllPendingTours: catchAsync(async (req: Request, res: Response, next: NextFunction) => {

@@ -18,6 +18,9 @@ router.get("/all-tours", checkAuth(TUserRole.ADMIN), TourController.getAllTours)
 // GET ALL TOUR(BY EACH) ------ (GUIDE ENDPOINT)
 router.get("/my-tours", checkAuth(TUserRole.GUIDE), TourController.getMyTours);
 
+// GET ALL ACTIVE+APPROVED TOURS(BY EACH) ------ (GUIDE ENDPOINT)
+router.get("/my-active-tours", checkAuth(TUserRole.GUIDE), TourController.getMyActiveTours);
+
 // GET ALL PENDING TOURS TO VERIFY THEM ------ (ADMIN ENDPOINT)
 router.get('/pending-tours', checkAuth(TUserRole.ADMIN), TourController.getAllPendingTours);
 
@@ -27,10 +30,7 @@ router.get("/", TourController.getAllApprovedTours);
 // GET SINGLE TOUR ------ (ADMIN, GUIDE ENDPOINT)
 router.get("/:slug", TourController.getSingleTour);
 
-// // GET SINGLE APPROVED TOUR ------ (PUBLIC ENDPOINT)
-// router.get("/:slug", TourController.getSingleTour);
-
-// // UPDATE TOUR ------ (GUIDE ENDPOINT)
+// UPDATE TOUR ------ (GUIDE ENDPOINT)
 router.patch("/update/:slug", checkAuth(TUserRole.GUIDE), multerUpload.array("files"), validateRequest(updateTourSchema), TourController.updateTour);
 
 // SEND VERIFY REQ------ (GUIDE ENDPOINT)

@@ -1,4 +1,4 @@
-import { ITour, TTourStatusByAdmin } from "./tour.interface";
+import { ITour, TTourStatus, TTourStatusByAdmin } from "./tour.interface";
 import { TourModel } from "./tour.model";
 import { JwtPayload } from "jsonwebtoken";
 import AppError from "../../errorHelpers/AppError";
@@ -89,6 +89,17 @@ export const TourServices = {
     },
 
 
+    // GET ALL ACTIVE+APPROVED TOURS(BY EACH) ------ (GUIDE ENDPOINT)
+    async getMyActiveTours(guideId: string, query: ITourQuery) {
+        return this.getAllTours({
+            ...query,
+            createdBy: guideId,
+            status: TTourStatus.ACTIVE,
+            statusByAdmin: TTourStatusByAdmin.APPROVED
+        });
+    },
+
+
     // GET ALL PENDING TOUR ------ (ADMIN ENDPOINT)
     async getAllPendingTours(query: ITourQuery) {
         const helper = new TourQueryHelper(query);
@@ -142,18 +153,62 @@ export const TourServices = {
         };
     },
 
+
     // GET SINGLE APPROVED TOUR ------ (PUBLIC ENDPOINT)
     async getSingleTour(slug: string) {
-        const tour = await TourModel.findOne({
-            slug
-        });
+        const tour = await TourModel.aggregate([
+            { $match: { slug } },
 
-        if (!tour) {
-            throw new AppError(httpStatus.NOT_FOUND, "Tour not found or not approved yet");
+            // Join guide
+            {
+                $lookup: {
+                    from: "guides",
+                    localField: "createdBy",
+                    foreignField: "_id",
+                    as: "guide",
+                },
+            },
+            { $unwind: "$guide" },
+
+            // Join user (same _id)
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "createdBy",
+                    foreignField: "_id",
+                    as: "user",
+                },
+            },
+            { $unwind: "$user" },
+
+            // Optional: remove sensitive fields
+            {
+                $project: {
+                    "user.password": 0,
+                    "user.__v": 0,
+                    "guide.__v": 0,
+                },
+            },
+        ]);
+
+        if (!tour.length) {
+            throw new AppError(httpStatus.NOT_FOUND, "Tour not found");
         }
 
-        return tour;
+        return tour[0];
     },
+
+    // async getSingleTour(slug: string) {
+    //     const tour = await TourModel.findOne({
+    //         slug
+    //     });
+
+    //     if (!tour) {
+    //         throw new AppError(httpStatus.NOT_FOUND, "Tour not found or not approved yet");
+    //     }
+
+    //     return tour;
+    // },
 
     // UPDATE TOUR ------ (GUIDE ENDPOINT)
     async updateTour(slug: string, guideId: string, payload: Partial<ITour>) {
