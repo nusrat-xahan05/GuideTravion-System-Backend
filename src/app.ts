@@ -30,6 +30,10 @@ app.use(
 );
 
 app.use('/api/v1', router);
+// app.post("/api/v1/payment/success", PaymentController.paymentSuccess);
+// app.post("/api/v1/payment/fail", PaymentController.paymentFail);
+// app.post("/api/v1/payment/cancel", PaymentController.paymentCancel);
+
 
 app.get('/', (_req: Request, res: Response) => {
     res.status(httpStatus.OK).json({

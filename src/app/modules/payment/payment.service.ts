@@ -104,8 +104,6 @@ export const PaymentService = {
             new URLSearchParams(payload).toString(),
             { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
         );
-        console.log('from respinse 1: ', response);
-        console.log('from respinse 2: ', response.data);
 
         if (!response.data?.GatewayPageURL) {
             throw new AppError(httpStatus.BAD_REQUEST, "SSL session failed");

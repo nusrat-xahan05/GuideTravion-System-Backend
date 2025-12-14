@@ -12,6 +12,7 @@ import { TPaymentStatus } from "../payment/payment.interface";
 
 export const BookingService = {
     async createBooking(payload: Partial<IBooking>, touristId: string) {
+        console.log('from frontend data payload: ', payload);
         const session = await BookingModel.startSession();
 
         try {

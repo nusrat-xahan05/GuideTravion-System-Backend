@@ -6,7 +6,6 @@ export const createBookingSchema = z.object({
     startDate: z.string().refine((s) => !Number.isNaN(Date.parse(s)), { message: "Invalid date" }),
     endDate: z.string().refine((s) => !Number.isNaN(Date.parse(s)), { message: "Invalid date" }),
     persons: z.preprocess((v) => Number(v), z.number().min(1, "At least one person required")),
-    // guestCount: z.number().int().positive()
     meetingTime: z.string().optional(),
     pickupLocation: z.string().optional(),
     dropoffLocation: z.string().optional(),
