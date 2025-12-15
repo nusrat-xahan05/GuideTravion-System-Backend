@@ -5,9 +5,8 @@ import { TPaymentStatus } from "../modules/payment/payment.interface";
 
 
 export const startBookingCompletionJob = () => {
-    cron.schedule("*/5 * * * *", async () => {
+    cron.schedule("0 * * * *", async () => {
         console.log("[CRON] Checking booking completion...", new Date());
-        // cron.schedule("0 * * * *", async () => {
         try {
             const now = new Date();
 

@@ -5,7 +5,7 @@ import { envVars } from "./app/config/env";
 import mongoose from "mongoose";
 import { seedSuperAdmin } from "./app/utils/seedAdmin";
 import "./app/cron/bookingExpiry.job";
-import "./app/cron/bookingCompletion.cron";
+import { startBookingCompletionJob } from "./app/cron/bookingCompletion.cron";
 // import { connectRedis } from "./app/config/redis.config";
 
 
@@ -27,6 +27,7 @@ const startServer = async () => {
     // await connectRedis();
     await startServer();
     await seedSuperAdmin();
+    startBookingCompletionJob();
 })()
 
 // Handle unhandled promise rejections
