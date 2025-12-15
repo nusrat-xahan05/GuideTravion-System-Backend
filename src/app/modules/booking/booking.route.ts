@@ -14,7 +14,8 @@ router.post("/", checkAuth(...Object.values(TUserRole)), validateRequest(createB
 // List bookings (admin/guide/tourist filters)
 router.get("/", checkAuth(TUserRole.ADMIN, TUserRole.GUIDE), BookingController.listBookings);
 
-router.get("/my-bookings",checkAuth(...Object.values(TUserRole)),BookingController.getUserBookings);
+// get own bookings (tourist)
+router.get("/my-bookings",checkAuth(TUserRole.TOURIST),BookingController.getUserBookings);
 
 // Get single booking
 router.get("/:id", checkAuth(...Object.values(TUserRole)), BookingController.getBooking);
