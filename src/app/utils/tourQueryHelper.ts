@@ -3,17 +3,9 @@
 import mongoose, { PipelineStage } from "mongoose";
 
 
-export type TourSortField =
-    | "durationDays"
-    | "pricePerPerson"
-    | "rating"
-    | "averageRating"
-    | "createdAt";
-
 export interface ITourQuery {
     search?: string;
-    sortBy?: TourSortField;
-    sortOrder?: "asc" | "desc";
+    sortBy?: string;
     page?: string;
     limit?: string;
 
@@ -103,7 +95,7 @@ export class TourQueryHelper {
                 $or: [
                     { title: { $regex: term, $options: "i" } },
                     { division: { $regex: term, $options: "i" } },
-                    { "user.email": { $regex: term, $options: "i" } }
+                    // { "user.email": { $regex: term, $options: "i" } }
                 ]
             }
         };
@@ -122,8 +114,8 @@ export class TourQueryHelper {
 
         if (this.query.createdBy) filter.createdBy = new mongoose.Types.ObjectId(this.query.createdBy);
         if (this.query.division) {
-        filter.division = { $regex: this.query.division, $options: "i" };
-    }
+            filter.division = { $regex: this.query.division, $options: "i" };
+        }
         // if (this.query.createdBy) filter.createdBy = this.query.createdBy;
 
 
@@ -136,19 +128,24 @@ export class TourQueryHelper {
     private buildSort(): PipelineStage | null {
         if (!this.query.sortBy) return null;
 
-        const order: 1 | -1 = this.query.sortOrder === "asc" ? 1 : -1;
+        let field = this.query.sortBy;
+        let order: 1 | -1 = 1;
 
-        const sortMap: Record<string, string> = {
-            durationDays: "durationDays",
-            pricePerPerson: "pricePerPerson",
-            rating: "rating",
-            averageRating: "averageRating",
-            createdAt: "createdAt",
-        };
+        // handle "-pricePerPerson"
+        if (field.startsWith("-")) {
+            order = -1;
+            field = field.substring(1);
+        }
 
-        const field = sortMap[this.query.sortBy];
+        const allowedFields = [
+            "durationDays",
+            "pricePerPerson",
+            "rating",
+            "averageRating",
+            "createdAt",
+        ];
 
-        if (!field) return null;
+        if (!allowedFields.includes(field)) return null;
 
         return {
             $sort: {
@@ -156,6 +153,7 @@ export class TourQueryHelper {
             },
         };
     }
+
 
     /** --------------------------
      * PAGINATION
@@ -185,17 +183,43 @@ export class TourQueryHelper {
     /** --------------------------
      * BUILD FINAL PIPELINE
      * ---------------------------*/
+    // build() {
+    //     const pipeline: PipelineStage[] = [
+    //         ...this.basePipeline()
+    //     ];
+
+    //     const search = this.buildSearch();
+    //     if (search) pipeline.push(search);
+
+    //     const filter = this.buildFilter();
+    //     if (filter) pipeline.push(filter);
+
+    //     const sort = this.buildSort();
+    //     if (sort) pipeline.push(sort);
+
+    //     const pagination = this.buildPagination();
+
+    //     return {
+    //         pipeline,
+    //         pagination
+    //     };
+    // }
+
     build() {
-        const pipeline: PipelineStage[] = [
-            ...this.basePipeline()
-        ];
+        const pipeline: PipelineStage[] = [];
 
-        const search = this.buildSearch();
-        if (search) pipeline.push(search);
-
+        // 1️⃣ FILTER FIRST (tour fields)
         const filter = this.buildFilter();
         if (filter) pipeline.push(filter);
 
+        // 2️⃣ SEARCH SECOND (title, division)
+        const search = this.buildSearch();
+        if (search) pipeline.push(search);
+
+        // 3️⃣ THEN LOOKUPS
+        pipeline.push(...this.basePipeline());
+
+        // 4️⃣ SORT
         const sort = this.buildSort();
         if (sort) pipeline.push(sort);
 
@@ -206,6 +230,7 @@ export class TourQueryHelper {
             pagination
         };
     }
+
 
     /** --------------------------
      * META CALCULATION
