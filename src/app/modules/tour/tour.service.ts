@@ -9,6 +9,7 @@ import { GuideModel } from "../user/user.model";
 import { ITourQuery, TourQueryHelper } from "../../utils/tourQueryHelper";
 import { tourCreatorLookupPipeline } from "../../utils/tourCreatorLookupPipeline";
 import { PipelineStage } from "mongoose";
+import { BD_DIVISIONS } from "./tour.constant";
 
 
 export const TourServices = {
@@ -183,6 +184,64 @@ export const TourServices = {
         };
     },
 
+
+    // GET TOUR COUNT BASED ON DIVISION ------ (PUBLIC ENDPOINT)
+    async getTourCountByDivision() {
+        const aggregationResult = await TourModel.aggregate([
+            {
+                $match: {
+                    statusByAdmin: TTourStatusByAdmin.APPROVED,
+                    status: TTourStatus.ACTIVE,
+                },
+            },
+            {
+                $group: {
+                    _id: "$division",
+                    totalTours: { $sum: 1 },
+                },
+            },
+        ]);
+
+
+        const divisionCountMap: Record<string, number> = {};
+        aggregationResult.forEach((item) => {
+            divisionCountMap[item._id] = item.totalTours;
+        });
+
+        const finalResult = BD_DIVISIONS.map((division) => ({
+            division,
+            totalTours: divisionCountMap[division] || 0,
+        }));
+
+        return finalResult;
+    },
+
+
+    // GET NEWLY APPROVED TOURS ------- (PUBLIC ENDPOINT)
+    async getNewApprovedTours(limit: number) {
+        const pipeline: PipelineStage[] = [
+            {
+                $match: {
+                    status: TTourStatus.ACTIVE,
+                    statusByAdmin: TTourStatusByAdmin.APPROVED
+                }
+            },
+
+            {
+                $sort: {
+                    createdAt: 1
+                }
+            },
+
+            { $limit: limit },
+
+            ...tourCreatorLookupPipeline
+        ];
+
+        const data = await TourModel.aggregate(pipeline);
+
+        return data;
+    },
 
     // GET SINGLE APPROVED TOUR ------ (PUBLIC ENDPOINT)
     async getSingleTour(slug: string) {

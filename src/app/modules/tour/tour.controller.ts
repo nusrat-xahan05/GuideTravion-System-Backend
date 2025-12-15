@@ -104,7 +104,7 @@ export const TourController = {
 
 
     // GET ALL APPROVED TOUR ------ (PUBLIC ENDPOINT)
-    getAllApprovedTours: catchAsync(async (req: Request, res: Response) => {
+    getAllApprovedTours: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
         const query = req.query;
         const result = await TourServices.getAllApprovedTours(query as Record<string, string>);
 
@@ -112,6 +112,31 @@ export const TourController = {
             statusCode: httpStatus.OK,
             success: true,
             message: "Tours fetched successfully",
+            data: result,
+        });
+    }),
+
+    // GET TOUR COUNT BASED ON DIVISION ------ (PUBLIC ENDPOINT)
+    getTourCountByDivision: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        const result = await TourServices.getTourCountByDivision();
+
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Tours By Each Division Retrived successfully",
+            data: result,
+        });
+    }),
+
+    // GET NEWLY APPROVED TOURS ------- (PUBLIC ENDPOINT)
+    getNewApprovedTours: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        const limit = Number(req.query.limit) || 6;
+        const result = await TourServices.getNewApprovedTours(limit);
+
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "New Tours Retrived successfully",
             data: result,
         });
     }),

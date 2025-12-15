@@ -30,6 +30,12 @@ router.get('/pending-tours', checkAuth(TUserRole.ADMIN), TourController.getAllPe
 // GET ALL APPROVED TOUR ------ (PUBLIC ENDPOINT)
 router.get("/", TourController.getAllApprovedTours);
 
+// GET TOUR COUNT BASED ON DIVISION ------ (PUBLIC ENDPOINT)
+router.get("/division-stats", TourController.getTourCountByDivision);
+
+// GET NEWLY APPROVED TOURS ------- (PUBLIC ENDPOINT)
+router.get("/new-arrival", TourController.getNewApprovedTours);
+
 // GET SINGLE TOUR ------ (ADMIN, GUIDE ENDPOINT)
 router.get("/:slug", TourController.getSingleTour);
 
