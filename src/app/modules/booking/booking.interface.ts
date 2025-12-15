@@ -46,6 +46,7 @@ export interface IBooking {
     notes?: string;
     createdAt?: Date;
     updatedAt?: Date;
+    completedAt?:Date;
 }
 
 export interface Pagination {

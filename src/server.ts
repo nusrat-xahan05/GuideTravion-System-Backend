@@ -4,7 +4,8 @@ import app from "./app";
 import { envVars } from "./app/config/env";
 import mongoose from "mongoose";
 import { seedSuperAdmin } from "./app/utils/seedAdmin";
-import "./app/utils/bookingExpiry.job";
+import "./app/cron/bookingExpiry.job";
+import "./app/cron/bookingCompletion.cron";
 // import { connectRedis } from "./app/config/redis.config";
 
 
