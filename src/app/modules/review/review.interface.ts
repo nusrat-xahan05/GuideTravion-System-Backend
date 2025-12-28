@@ -9,7 +9,7 @@ export interface IReview {
     guideId: Types.ObjectId;
 
     rating: number; // 1 - 5
-    comment?: string;
+    review?: string;
 
     createdAt?: Date;
 }

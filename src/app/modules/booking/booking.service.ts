@@ -108,6 +108,7 @@ export const BookingService = {
                         paymentStatus: TPaymentStatus.UNPAID,
                         status: TBookingStatus.PENDING,
                         expiresAt,
+                        isReviewd: false,
                         notes: payload.notes,
                     }], { session }
             );

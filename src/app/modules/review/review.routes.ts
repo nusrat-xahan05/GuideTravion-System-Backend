@@ -9,7 +9,7 @@ const router = express.Router();
 router.post("/", checkAuth(TUserRole.TOURIST), ReviewController.createReview);
 
 // Get reviews by tour
-router.get("/tour/:tourId", ReviewController.getReviewsByTour);
+router.get("/:tourId", ReviewController.getReviewsByTour);
 
 // Check review eligibility
 router.get("/eligibility", checkAuth(TUserRole.TOURIST), ReviewController.checkEligibility);

@@ -163,6 +163,7 @@ export const PaymentService = {
         }, { new: true, runValidators: true });
     },
 };
+
 // const successPayment = async (query: Record<string, string>) => {
 
 //         const updatedPayment = await Payment.findOneAndUpdate({ transactionId: query.transactionId }, {

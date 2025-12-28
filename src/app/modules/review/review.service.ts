@@ -6,11 +6,13 @@ import { ReviewModel } from "./review.model";
 import { TourModel } from "../tour/tour.model";
 import { TBookingStatus } from "../booking/booking.interface";
 import { TPaymentStatus } from "../payment/payment.interface";
+import { IReview } from "./review.interface";
 
 export const ReviewService = {
     // ================= CREATE REVIEW =================
     async createReview(
-        payload: { bookingId: string; rating: number; comment?: string },
+        // payload: { bookingId: string; rating: number; review?: string },
+        payload: IReview,
         touristId: string
     ) {
         const session = await mongoose.startSession();
@@ -63,7 +65,7 @@ export const ReviewService = {
                         touristId: booking.touristId,
                         guideId: booking.guideId,
                         rating: payload.rating,
-                        comment: payload.comment,
+                        review: payload.review,
                     },
                 ],
                 { session }
@@ -90,6 +92,11 @@ export const ReviewService = {
                 { session }
             );
 
+            await BookingModel.findByIdAndUpdate(
+                booking._id, { isReviewd: true },
+                { session }
+            );
+
             await session.commitTransaction();
             session.endSession();
 
@@ -101,12 +108,14 @@ export const ReviewService = {
         }
     },
 
+
     // ================= GET REVIEWS BY TOUR =================
     async getReviewsByTour(tourId: string) {
         return ReviewModel.find({ tourId })
             .populate("touristId", "firstName profileImage")
             .sort({ createdAt: -1 });
     },
+    
 
     // ================= CHECK REVIEW ELIGIBILITY =================
     async checkEligibility(tourId: string, touristId: string) {

@@ -26,6 +26,7 @@ const bookingSchema = new Schema<IBooking>({
     status: { type: String, enum: Object.values(TBookingStatus), default: TBookingStatus.PENDING },
     cancelledBy: { type: String, enum: Object.values(TCancelledBy) },
     expiresAt: { type: Date },
+    isReviewd: {type: Boolean, default: false},
     completedAt: { type: Date, },
 
     notes: { type: String }

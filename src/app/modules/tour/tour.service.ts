@@ -287,6 +287,7 @@ export const TourServices = {
         return tour[0];
     },
 
+
     // UPDATE TOUR ------ (GUIDE ENDPOINT)
     async updateTour(slug: string, guideId: string, payload: Partial<ITour>) {
         const tour = await TourModel.findOne({ slug });
