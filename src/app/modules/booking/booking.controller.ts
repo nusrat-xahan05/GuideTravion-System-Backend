@@ -9,32 +9,65 @@ import { TUserRole } from "../user/user.interface";
 
 
 export const BookingController = {
-    createBooking: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-        const decodeToken = req.user as JwtPayload
-        const booking = await BookingService.createBooking(req.body, decodeToken.userId);
-
-        sendResponse(res, {
-            statusCode: httpStatus.CREATED,
-            success: true,
-            message: "Booking created. Please complete payment.",
-            data: booking,
-        })
-    }),
-
-    listBookings: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-        const page = Number(req.query.page) || 1;
-        const limit = Number(req.query.limit) || 10;
-
-        const result = await BookingService.listBookings(req.query, { page, limit });
+    getActiveBookings: catchAsync(async (req: Request, res: Response) => {
+        const decoded = req.user as JwtPayload;
+        const query = req.query;
+        const bookings = await BookingService.getActiveBookings(decoded.userId, decoded.role as TUserRole, query as Record<string, string>);
 
         sendResponse(res, {
             statusCode: httpStatus.OK,
             success: true,
-            message: "Bookings Retrieved Successfully",
-            data: result.data,
-            meta: result.meta
+            message: "Active Booked Tour Retrieved Successfully",
+            data: bookings,
         });
     }),
+
+
+    getUpcomingBookings: catchAsync(async (req: Request, res: Response) => {
+        const decoded = req.user as JwtPayload;
+        const query = req.query;
+        const bookings = await BookingService.getUpcomingBookings(decoded.userId, decoded.role as TUserRole, query as Record<string, string>);
+
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Upcoming Booked Tour Retrieved Successfully",
+            data: bookings,
+        });
+    }),
+
+
+    getCompletedBookings: catchAsync(async (req: Request, res: Response) => {
+        const decoded = req.user as JwtPayload;
+        const query = req.query;
+        const bookings = await BookingService.getCompletedBookings(decoded.userId, decoded.role as TUserRole,
+             query as Record<string, string>
+        );
+
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Completed Booked Tours Retrieved Successfully",
+            data: bookings,
+        });
+    }),
+
+
+    getCancelledBookings: catchAsync(async (req: Request, res: Response) => {
+        const decoded = req.user as JwtPayload;
+        const query = req.query;
+        const bookings = await BookingService.getCancelledBookings(decoded.userId, decoded.role as TUserRole,
+             query as Record<string, string>
+        );
+
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Cancelled Booked Tours Retrieved Successfully",
+            data: bookings,
+        });
+    }),
+
 
     // MY BOOKINGS
     getUserBookings: catchAsync(async (req: Request, res: Response) => {
@@ -53,22 +86,36 @@ export const BookingController = {
         });
     }),
 
-    // GET SINGLE BOOKING
-    getBooking: catchAsync(async (req: Request, res: Response) => {
-        const decoded = req.user as JwtPayload;
-        const booking = await BookingService.getBookingById(
-            req.params.id,
-            decoded.userId,
-            decoded.role as TUserRole
-        );
+
+    listBookings: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        const page = Number(req.query.page) || 1;
+        const limit = Number(req.query.limit) || 10;
+
+        const result = await BookingService.listBookings(req.query, { page, limit });
 
         sendResponse(res, {
             statusCode: httpStatus.OK,
             success: true,
-            message: "Booking retrieved",
-            data: booking,
+            message: "Bookings Retrieved Successfully",
+            data: result.data,
+            meta: result.meta
         });
     }),
+
+
+    // CREATE BOOKING ------ (TOURIST ENDPOINT)
+    createBooking: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        const decodeToken = req.user as JwtPayload
+        const booking = await BookingService.createBooking(req.body, decodeToken.userId);
+
+        sendResponse(res, {
+            statusCode: httpStatus.CREATED,
+            success: true,
+            message: "Booking created. Please complete payment.",
+            data: booking,
+        })
+    }),
+
 
     cancelBooking: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
         const bookingId = req.params.id;

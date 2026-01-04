@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import { seedSuperAdmin } from "./app/utils/seedAdmin";
 import "./app/cron/bookingExpiry.job";
 import { startBookingCompletionJob } from "./app/cron/bookingCompletion.cron";
+import { startBookingExpiryJob } from "./app/cron/bookingExpiry.job";
 // import { connectRedis } from "./app/config/redis.config";
 
 
@@ -14,6 +15,10 @@ const startServer = async () => {
     try {
         await mongoose.connect(envVars.DB_URL);
         console.log("Connected To MongoDB");
+
+        await seedSuperAdmin();
+        startBookingExpiryJob();
+        startBookingCompletionJob();
 
         server = app.listen(envVars.PORT, () => {
             console.log(`Server is Listening To Port ${envVars.PORT}`);
@@ -26,8 +31,6 @@ const startServer = async () => {
 (async () => {
     // await connectRedis();
     await startServer();
-    await seedSuperAdmin();
-    startBookingCompletionJob();
 })()
 
 // Handle unhandled promise rejections

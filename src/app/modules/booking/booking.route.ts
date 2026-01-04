@@ -8,17 +8,33 @@ import { BookingController } from "./booking.controller";
 
 const router = express.Router();
 
-// Create booking (tourist only)
-router.post("/", checkAuth(...Object.values(TUserRole)), validateRequest(createBookingSchema), BookingController.createBooking);
 
-// List bookings (admin/guide/tourist filters)
+// GET ACTIVE BOOKING ------ (TOURIST ENDPOINT)
+router.get("/active-booked-tours", checkAuth(TUserRole.GUIDE), BookingController.getActiveBookings);
+
+// GET UPCOMING BOOKINGS ------ (GUIDE, TOURIST ENDPOINT)
+router.get("/upcoming-booked-tours", checkAuth(TUserRole.GUIDE, TUserRole.TOURIST), BookingController.getUpcomingBookings);
+
+// GET COMPLETED BOOKINGS ------ (TOURIST ENDPOINT)
+router.get("/completed-booked-tours", checkAuth(TUserRole.GUIDE), BookingController.getCompletedBookings);
+
+// GET CANCELLED BOOKINGS ------ (TOURIST ENDPOINT)
+router.get("/cancelled-booked-tours", checkAuth(TUserRole.GUIDE, TUserRole.TOURIST), BookingController.getCancelledBookings);
+
+// GET ACTIVE BOOKING ------ (TOURIST ENDPOINT)
+router.get("/my-bookings", checkAuth(TUserRole.TOURIST), BookingController.getUserBookings);
+
+// List bookings (admin/guide filters)
 router.get("/", checkAuth(TUserRole.ADMIN, TUserRole.GUIDE), BookingController.listBookings);
 
-// get own bookings (tourist)
-router.get("/my-bookings",checkAuth(TUserRole.TOURIST),BookingController.getUserBookings);
+// router.get(
+//     "/tourist/past",
+//     checkAuth(TUserRole.TOURIST),
+//     BookingController.getTouristPastBookings
+// );
 
-// Get single booking
-router.get("/:id", checkAuth(...Object.values(TUserRole)), BookingController.getBooking);
+// CREATE BOOKING ------ (TOURIST ENDPOINT)
+router.post("/", checkAuth(...Object.values(TUserRole)), validateRequest(createBookingSchema), BookingController.createBooking);
 
 // router.patch("/:bookingId/status", checkAuth(...Object.values(TUserRole)), BookingController.updateBookingStatus);
 

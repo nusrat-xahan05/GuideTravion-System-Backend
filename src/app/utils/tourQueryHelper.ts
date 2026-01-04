@@ -183,28 +183,6 @@ export class TourQueryHelper {
     /** --------------------------
      * BUILD FINAL PIPELINE
      * ---------------------------*/
-    // build() {
-    //     const pipeline: PipelineStage[] = [
-    //         ...this.basePipeline()
-    //     ];
-
-    //     const search = this.buildSearch();
-    //     if (search) pipeline.push(search);
-
-    //     const filter = this.buildFilter();
-    //     if (filter) pipeline.push(filter);
-
-    //     const sort = this.buildSort();
-    //     if (sort) pipeline.push(sort);
-
-    //     const pagination = this.buildPagination();
-
-    //     return {
-    //         pipeline,
-    //         pagination
-    //     };
-    // }
-
     build() {
         const pipeline: PipelineStage[] = [];
 

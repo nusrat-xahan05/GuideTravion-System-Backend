@@ -8,9 +8,278 @@ import { TTourStatus } from "../tour/tour.interface";
 import { UserModel } from "../user/user.model";
 import { TUserRole, TUserStatus } from "../user/user.interface";
 import { TPaymentStatus } from "../payment/payment.interface";
+import { BookingQueryHelper } from "../../utils/bookingQueryHelper";
+import { PipelineStage } from "mongoose";
 
 
 export const BookingService = {
+    async getActiveBookings(userId: string, userRole: TUserRole, query: Record<string, string>) {
+        const helper = new BookingQueryHelper(
+            { ...query, status: TBookingStatus.CONFIRMED, active: "true" },
+            userId,
+            userRole
+        );
+
+        const { page, limit, skip } = helper.pagination();
+
+        const pipeline: PipelineStage[] = [
+            helper.baseMatch(),
+            ...helper.lookups(),
+        ];
+
+        const fieldFilters = helper.fieldFilters();
+        if (fieldFilters) pipeline.push(fieldFilters);
+
+        const searchStage = helper.search();
+        if (searchStage) pipeline.push(searchStage);
+
+        pipeline.push(helper.sort());
+
+        /* ---------- DATA PIPELINE ---------- */
+        const dataPipeline = [
+            ...pipeline,
+            { $skip: skip },
+            { $limit: limit },
+        ];
+
+        /* ---------- META PIPELINE ---------- */
+        const countPipeline = [
+            ...pipeline,
+            { $count: "total" },
+        ];
+
+        const [data, count] = await Promise.all([
+            BookingModel.aggregate(dataPipeline),
+            BookingModel.aggregate(countPipeline),
+        ]);
+
+        const total = count[0]?.total || 0;
+
+        return {
+            data,
+            meta: {
+                page,
+                limit,
+                total,
+                totalPage: Math.ceil(total / limit),
+            },
+        };
+    },
+
+
+    async getUpcomingBookings(userId: string, userRole: TUserRole, query: Record<string, string>) {
+        const helper = new BookingQueryHelper(
+            { ...query, status: TBookingStatus.CONFIRMED, upcoming: "true" },
+            userId,
+            userRole
+        );
+
+        const { page, limit, skip } = helper.pagination();
+
+        const pipeline: PipelineStage[] = [
+            helper.baseMatch(),
+            ...helper.lookups(),
+        ];
+
+        const fieldFilters = helper.fieldFilters();
+        if (fieldFilters) pipeline.push(fieldFilters);
+
+        const searchStage = helper.search();
+        if (searchStage) pipeline.push(searchStage);
+
+        pipeline.push(helper.sort());
+
+        /* ---------- DATA PIPELINE ---------- */
+        const dataPipeline = [
+            ...pipeline,
+            { $skip: skip },
+            { $limit: limit },
+        ];
+
+        /* ---------- META PIPELINE ---------- */
+        const countPipeline = [
+            ...pipeline,
+            { $count: "total" },
+        ];
+
+        const [data, count] = await Promise.all([
+            BookingModel.aggregate(dataPipeline),
+            BookingModel.aggregate(countPipeline),
+        ]);
+
+        const total = count[0]?.total || 0;
+
+        return {
+            data,
+            meta: {
+                page,
+                limit,
+                total,
+                totalPage: Math.ceil(total / limit),
+            },
+        };
+    },
+
+
+    async getCompletedBookings(userId: string, userRole: TUserRole, query: Record<string, string>) {
+        const helper = new BookingQueryHelper(
+            { ...query, status: TBookingStatus.COMPLETED },
+            userId,
+            userRole
+        );
+
+        const { page, limit, skip } = helper.pagination();
+
+        const pipeline: PipelineStage[] = [
+            helper.baseMatch(),
+            ...helper.lookups(),
+        ];
+
+        const fieldFilters = helper.fieldFilters();
+        if (fieldFilters) pipeline.push(fieldFilters);
+
+        const searchStage = helper.search();
+        if (searchStage) pipeline.push(searchStage);
+
+        pipeline.push(helper.sort());
+
+        /* ---------- DATA PIPELINE ---------- */
+        const dataPipeline = [
+            ...pipeline,
+            { $skip: skip },
+            { $limit: limit },
+        ];
+
+        /* ---------- META PIPELINE ---------- */
+        const countPipeline = [
+            ...pipeline,
+            { $count: "total" },
+        ];
+
+        const [data, count] = await Promise.all([
+            BookingModel.aggregate(dataPipeline),
+            BookingModel.aggregate(countPipeline),
+        ]);
+
+        console.log('from service completed booking: ', data);
+
+        const total = count[0]?.total || 0;
+
+        return {
+            data,
+            meta: {
+                page,
+                limit,
+                total,
+                totalPage: Math.ceil(total / limit),
+            },
+        };
+    },
+
+
+    async getCancelledBookings(userId: string, userRole: TUserRole, query: Record<string, string>) {
+        const helper = new BookingQueryHelper(
+            { ...query, status: TBookingStatus.CANCELLED },
+            userId,
+            userRole
+        );
+
+        const { page, limit, skip } = helper.pagination();
+
+        const pipeline: PipelineStage[] = [
+            helper.baseMatch(),
+            ...helper.lookups(),
+        ];
+
+        const fieldFilters = helper.fieldFilters();
+        if (fieldFilters) pipeline.push(fieldFilters);
+
+        const searchStage = helper.search();
+        if (searchStage) pipeline.push(searchStage);
+
+        pipeline.push(helper.sort());
+
+        /* ---------- DATA PIPELINE ---------- */
+        const dataPipeline = [
+            ...pipeline,
+            { $skip: skip },
+            { $limit: limit },
+        ];
+
+        /* ---------- META PIPELINE ---------- */
+        const countPipeline = [
+            ...pipeline,
+            { $count: "total" },
+        ];
+
+        const [data, count] = await Promise.all([
+            BookingModel.aggregate(dataPipeline),
+            BookingModel.aggregate(countPipeline),
+        ]);
+
+        const total = count[0]?.total || 0;
+
+        return {
+            data,
+            meta: {
+                page,
+                limit,
+                total,
+                totalPage: Math.ceil(total / limit),
+            },
+        };
+    },
+
+
+    // ======================================================
+    // GET BOOKINGS FOR LOGGED-IN USER
+    // ======================================================
+    async getUserBookings(userId: string, userRole: TUserRole) {
+        const filter: any = {};
+
+        if (userRole === TUserRole.TOURIST) filter.touristId = userId;
+        if (userRole === TUserRole.GUIDE) filter.guideId = userId;
+
+        return BookingModel.find(filter)
+            .sort({ createdAt: -1 })
+            .populate("tourId");
+    },
+
+
+    async listBookings(filters: any, pagination: Pagination) {
+        const { page, limit } = pagination;
+        const skip = (page - 1) * limit;
+
+        const query: any = {};
+
+        if (filters.status) query.status = filters.status;
+        if (filters.paymentStatus) query.paymentStatus = filters.paymentStatus;
+        if (filters.guideId) query.guideId = filters.guideId;
+        if (filters.touristId) query.touristId = filters.touristId;
+
+        const data = await BookingModel.find(query)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .populate("tourId")
+            .populate("guideId", "firstName email")
+            .populate("touristId", "firstName email");
+
+        const total = await BookingModel.countDocuments(query);
+
+        return {
+            data,
+            meta: {
+                page,
+                limit,
+                total,
+                totalPage: Math.ceil(total / limit),
+            },
+        };
+    },
+
+
+    // CREATE BOOKING ------ (TOURIST ENDPOINT)
     async createBooking(payload: Partial<IBooking>, touristId: string) {
         console.log('from frontend data payload: ', payload);
         const session = await BookingModel.startSession();
@@ -47,9 +316,11 @@ export const BookingService = {
             // Strict Guide Availability Check
             const conflictingBooking = await BookingModel.findOne({
                 guideId,
-                status: { $in: [
-                    // TBookingStatus.PENDING, 
-                    TBookingStatus.CONFIRMED] },
+                status: {
+                    $in: [
+                        // TBookingStatus.PENDING, 
+                        TBookingStatus.CONFIRMED]
+                },
                 startDate: { $lte: end },
                 endDate: { $gte: start },
             }).session(session);
@@ -124,77 +395,6 @@ export const BookingService = {
         }
     },
 
-    async listBookings(filters: any, pagination: Pagination) {
-        const { page, limit } = pagination;
-        const skip = (page - 1) * limit;
-
-        const query: any = {};
-
-        if (filters.status) query.status = filters.status;
-        if (filters.paymentStatus) query.paymentStatus = filters.paymentStatus;
-        if (filters.guideId) query.guideId = filters.guideId;
-        if (filters.touristId) query.touristId = filters.touristId;
-
-        const data = await BookingModel.find(query)
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit)
-            .populate("tourId")
-            .populate("guideId", "firstName email")
-            .populate("touristId", "firstName email");
-
-        const total = await BookingModel.countDocuments(query);
-
-        return {
-            data,
-            meta: {
-                page,
-                limit,
-                total,
-                totalPage: Math.ceil(total / limit),
-            },
-        };
-    },
-
-    // ======================================================
-    // GET BOOKINGS FOR LOGGED-IN USER
-    // ======================================================
-    async getUserBookings(userId: string, role: TUserRole) {
-        const filter: any = {};
-
-        if (role === TUserRole.TOURIST) filter.touristId = userId;
-        if (role === TUserRole.GUIDE) filter.guideId = userId;
-
-        return BookingModel.find(filter)
-            .sort({ createdAt: -1 })
-            .populate("tourId");
-    },
-
-    // ======================================================
-    // GET SINGLE BOOKING
-    // ======================================================
-    async getBookingById(id: string, userId: string, role: TUserRole) {
-        const booking = await BookingModel.findById(id).populate("tourId");
-        if (!booking) {
-            throw new AppError(httpStatus.NOT_FOUND, "Booking not found");
-        }
-
-        if (
-            role === TUserRole.TOURIST &&
-            booking.touristId.toString() !== userId
-        ) {
-            throw new AppError(httpStatus.FORBIDDEN, "Unauthorized access");
-        }
-
-        if (
-            role === TUserRole.GUIDE &&
-            booking.guideId.toString() !== userId
-        ) {
-            throw new AppError(httpStatus.FORBIDDEN, "Unauthorized access");
-        }
-
-        return booking;
-    },
 
     // ======================================================
     // CANCEL BOOKING
