@@ -38,7 +38,8 @@ const touristSchema = new Schema<ITourist>({
     _id: { type: Types.ObjectId, ref: "User", required: true },
     travelInterests: { type: [String], default: [] },
     preferredStyles: { type: [String], default: [] },
-    wishlistTours: { type: [Types.ObjectId], ref: "Tour", default: [] },
+
+    wishlistTours: [{ type: Types.ObjectId, ref: "Tour", },],
     bookings: { type: [Types.ObjectId], ref: "Booking", default: [] },
 }, {
     timestamps: true,

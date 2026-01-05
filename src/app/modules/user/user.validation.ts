@@ -132,30 +132,3 @@ export const updateGuideSchema = updateBaseUserSchema.extend({
 });
 
 
-//     userStatus: z
-//         .enum(Object.values(TUserStatus) as [TUserStatus, ...TUserStatus[]])
-//         .optional()
-//         .superRefine((val, ctx) => {
-//             if (val && !Object.values(TUserStatus).includes(val)) {
-//                 ctx.addIssue({
-//                     code: "custom",
-//                     message: `Status Must Be 'ACTIVE', 'INACTIVE' or 'BLOCKED'. ${val} is Not Acceptable`,
-//                 });
-//             }
-//         }),
-
-//     isVerified: z
-//         .boolean({ error: "Verified Must Be True or False" })
-//         .optional(),
-// });
-
-// wishlistTours: z.array(z.string()).optional(),
-//     bookings: z.array(z.string()).optional(),
-
-//     role: z.enum(TUserRole).default(TUserRole.TOURIST),
-
-// rating: z.number().default(0),
-//     totalReviews: z.number().default(0),
-
-//         role: z.enum(TUserRole).default(TUserRole.GUIDE),
-

@@ -41,7 +41,7 @@ export interface IUser {
 export interface ITourist extends IUser {
     travelInterests?: string[];
     preferredStyles?: string[];
-    wishlistTours?: string[];
+    wishlistTours?: Types.ObjectId[];
     bookings?: string[];
 }
 
