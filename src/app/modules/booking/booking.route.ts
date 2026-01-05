@@ -16,7 +16,7 @@ router.get("/active-booked-tours", checkAuth(TUserRole.GUIDE), BookingController
 router.get("/upcoming-booked-tours", checkAuth(TUserRole.GUIDE, TUserRole.TOURIST), BookingController.getUpcomingBookings);
 
 // GET COMPLETED BOOKINGS ------ (TOURIST ENDPOINT)
-router.get("/completed-booked-tours", checkAuth(TUserRole.GUIDE), BookingController.getCompletedBookings);
+router.get("/completed-booked-tours", checkAuth(TUserRole.GUIDE, TUserRole.TOURIST), BookingController.getCompletedBookings);
 
 // GET CANCELLED BOOKINGS ------ (TOURIST ENDPOINT)
 router.get("/cancelled-booked-tours", checkAuth(TUserRole.GUIDE, TUserRole.TOURIST), BookingController.getCancelledBookings);

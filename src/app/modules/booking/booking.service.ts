@@ -161,8 +161,6 @@ export const BookingService = {
             BookingModel.aggregate(countPipeline),
         ]);
 
-        console.log('from service completed booking: ', data);
-
         const total = count[0]?.total || 0;
 
         return {
