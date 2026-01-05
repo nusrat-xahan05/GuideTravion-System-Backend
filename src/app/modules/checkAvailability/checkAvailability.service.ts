@@ -15,8 +15,11 @@ export const AvailabilityService = {
         persons: number
     ): Promise<AvailabilityResult> => {
 
+        console.log('from services startIn endIn: ', startIn, endIn);
+
         const start = new Date(startIn);
         const end = new Date(endIn);
+        console.log('from services start end: ', start, end);
 
         if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) {
             throw new Error("Invalid booking dates");
@@ -56,6 +59,8 @@ export const AvailabilityService = {
             startDate: { $lte: end },
             endDate: { $gte: start },
         }).lean();
+
+        console.log('from availability service bookings: ', bookings);
 
         const bookedPersons = bookings.reduce(
             (sum, b) => sum + (b.persons || 0),

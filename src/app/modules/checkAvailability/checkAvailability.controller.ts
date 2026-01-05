@@ -8,7 +8,7 @@ import httpStatus from "http-status";
 
 export const AvailabilityController = {
     check: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-        const { tourId, startDate, endDate, persons } = req.query; // ISO date strings expected
+        const { tourId, startDate, endDate, persons } = req.query;
 
         const result = await AvailabilityService.checkGuideAvailability(
             tourId as string,
