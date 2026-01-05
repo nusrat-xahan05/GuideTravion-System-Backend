@@ -15,11 +15,8 @@ export const AvailabilityService = {
         persons: number
     ): Promise<AvailabilityResult> => {
 
-        console.log('from services startIn endIn: ', startIn, endIn);
-
         const start = new Date(startIn);
         const end = new Date(endIn);
-        console.log('from services start end: ', start, end);
 
         if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) {
             throw new Error("Invalid booking dates");
@@ -29,7 +26,7 @@ export const AvailabilityService = {
             throw new Error("Invalid number of persons");
         }
 
-        // 1️⃣ Tour
+        // Tour
         const tour = await TourModel.findById(tourId)
             .select("createdBy maxGroupSize")
             .lean();
@@ -38,7 +35,7 @@ export const AvailabilityService = {
 
         const guideId = tour.createdBy;
 
-        // 2️⃣ Guide status
+        // Guide status
         const guideUser = await UserModel.findById(guideId)
             .select("userStatus")
             .lean();
@@ -48,35 +45,46 @@ export const AvailabilityService = {
                 available: false,
                 guideId,
                 remainingSeats: 0,
-                reason: "Guide is not active",
+                message: "Guide is not active",
             };
         }
 
-        // 3️⃣ Overlapping bookings (CONFIRMED + PENDING)
-        const bookings = await BookingModel.find({
+        const haveOtherBookedTour = await BookingModel.findOne({
             guideId,
-            status: { $in: [TBookingStatus.CONFIRMED] },
+            tourId: { $ne: tourId },
+            status: TBookingStatus.CONFIRMED,
+            startDate: { $lte: end },
+            endDate: { $gte: start },
+        });
+
+        if (haveOtherBookedTour) {
+            return {
+                available: false,
+                guideId,
+                remainingSeats: 0,
+                message: "Guide already booked for another tour on selected dates",
+            };
+        }
+
+        const sameTourBookings = await BookingModel.find({
+            guideId,
+            tourId,
+            status: TBookingStatus.CONFIRMED,
             startDate: { $lte: end },
             endDate: { $gte: start },
         }).lean();
 
-        console.log('from availability service bookings: ', bookings);
-
-        const bookedPersons = bookings.reduce(
-            (sum, b) => sum + (b.persons || 0),
-            0
-        );
-
+        const bookedPersons = sameTourBookings.reduce((sum, b) => sum + (b.persons || 0), 0);
         const maxSeats = tour.maxGroupSize || 1;
         const remainingSeats = Math.max(maxSeats - bookedPersons, 0);
 
-        // 4️⃣ Capacity check
+        // Capacity check
         if (remainingSeats < persons) {
             return {
                 available: false,
                 guideId,
                 remainingSeats,
-                reason: `Only ${remainingSeats} seat(s) left`,
+                message: `Only ${remainingSeats} seat(s) left for selected dates`,
             };
         }
 

@@ -19,5 +19,5 @@ export type AvailabilityResult =
       available: false;
       guideId: Types.ObjectId;
       remainingSeats: number;
-      reason: string;
+      message: string;
     };
