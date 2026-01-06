@@ -10,16 +10,16 @@ const router = express.Router();
 
 
 // GET ACTIVE BOOKING ------ (TOURIST ENDPOINT)
-router.get("/active-booked-tours", checkAuth(TUserRole.GUIDE), BookingController.getActiveBookings);
+router.get("/active-booked-tours", checkAuth(TUserRole.GUIDE, TUserRole.ADMIN), BookingController.getActiveBookings);
 
 // GET UPCOMING BOOKINGS ------ (GUIDE, TOURIST ENDPOINT)
-router.get("/upcoming-booked-tours", checkAuth(TUserRole.GUIDE, TUserRole.TOURIST), BookingController.getUpcomingBookings);
+router.get("/upcoming-booked-tours", checkAuth(TUserRole.GUIDE, TUserRole.TOURIST, TUserRole.ADMIN), BookingController.getUpcomingBookings);
 
 // GET COMPLETED BOOKINGS ------ (TOURIST ENDPOINT)
-router.get("/completed-booked-tours", checkAuth(TUserRole.GUIDE, TUserRole.TOURIST), BookingController.getCompletedBookings);
+router.get("/completed-booked-tours", checkAuth(TUserRole.GUIDE, TUserRole.TOURIST, TUserRole.ADMIN), BookingController.getCompletedBookings);
 
 // GET CANCELLED BOOKINGS ------ (TOURIST ENDPOINT)
-router.get("/cancelled-booked-tours", checkAuth(TUserRole.GUIDE, TUserRole.TOURIST), BookingController.getCancelledBookings);
+router.get("/cancelled-booked-tours", checkAuth(TUserRole.GUIDE, TUserRole.TOURIST, TUserRole.ADMIN), BookingController.getCancelledBookings);
 
 // GET ACTIVE BOOKING ------ (TOURIST ENDPOINT)
 router.get("/my-bookings", checkAuth(TUserRole.TOURIST), BookingController.getUserBookings);
