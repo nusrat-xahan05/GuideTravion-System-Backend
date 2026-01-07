@@ -7,6 +7,7 @@ import { TourModel } from "../tour/tour.model";
 import { TBookingStatus } from "../booking/booking.interface";
 import { TPaymentStatus } from "../payment/payment.interface";
 import { IReview } from "./review.interface";
+import { GuideModel } from "../user/user.model";
 
 export const ReviewService = {
     // ================= CREATE REVIEW =================
@@ -92,6 +93,26 @@ export const ReviewService = {
                 { session }
             );
 
+            const guide = await GuideModel.findById(booking.guideId).session(session);
+
+            if (guide) {
+                const oldTotal = guide.totalReviews || 0;
+                const oldAvg = guide.rating || 0;
+
+                const newTotal = oldTotal + 1;
+                const newAvg =
+                    (oldAvg * oldTotal + payload.rating) / newTotal;
+
+                await GuideModel.findByIdAndUpdate(
+                    guide._id,
+                    {
+                        totalReviews: newTotal,
+                        rating: Number(newAvg.toFixed(2)),
+                    },
+                    { session }
+                );
+            }
+
             await BookingModel.findByIdAndUpdate(
                 booking._id, { isReviewd: true },
                 { session }
@@ -115,7 +136,7 @@ export const ReviewService = {
             .populate("touristId", "firstName profileImage")
             .sort({ createdAt: -1 });
     },
-    
+
 
     // ================= CHECK REVIEW ELIGIBILITY =================
     async checkEligibility(tourId: string, touristId: string) {

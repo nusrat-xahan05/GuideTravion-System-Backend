@@ -8,8 +8,10 @@ import { TUserRole, TUserStatus, TVerificationReqStatus } from "../user/user.int
 import { GuideModel } from "../user/user.model";
 import { ITourQuery, TourQueryHelper } from "../../utils/tourQueryHelper";
 import { tourCreatorLookupPipeline } from "../../utils/tourCreatorLookupPipeline";
-import { PipelineStage } from "mongoose";
+import mongoose, { PipelineStage } from "mongoose";
 import { BD_DIVISIONS } from "./tour.constant";
+import { BookingModel } from "../booking/booking.model";
+import { TBookingStatus } from "../booking/booking.interface";
 
 
 export const TourServices = {
@@ -344,5 +346,45 @@ export const TourServices = {
         )
 
         return updatedTour;
+    },
+
+    async deleteTourBySlug(slug: string, guideId: string) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+
+        try {
+            const tour = await TourModel.findOne({ slug, createdBy: guideId }).session(session);
+
+            if (!tour) {
+                throw new AppError(httpStatus.NOT_FOUND, "Tour not found");
+            }
+
+            const blockingBooking = await BookingModel.findOne({
+                tourId: tour._id,
+                status: {
+                    $in: [TBookingStatus.PENDING, TBookingStatus.CONFIRMED],
+                },
+            }).session(session);
+
+            if (blockingBooking) {
+                throw new AppError(
+                    httpStatus.BAD_REQUEST,
+                    "Tour cannot be deleted because it has active or confirmed bookings"
+                );
+            }
+
+            await TourModel.deleteOne({ _id: tour._id }).session(session);
+
+            await session.commitTransaction();
+            session.endSession();
+
+            return {
+                data: null
+            };
+        } catch (error) {
+            await session.abortTransaction();
+            session.endSession();
+            throw error;
+        }
     },
 };

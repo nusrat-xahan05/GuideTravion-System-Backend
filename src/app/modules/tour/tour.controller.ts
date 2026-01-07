@@ -200,4 +200,18 @@ export const TourController = {
             data: result,
         });
     }),
+
+    deleteTourBySlug: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+        const { slug } = req.params;
+        const decodedToken = req.user;
+
+        const result = await TourServices.deleteTourBySlug(slug, decodedToken.userId);
+
+        sendResponse(res, {
+            statusCode: httpStatus.OK,
+            success: true,
+            message: "Tour deleted successfully",
+            data: result,
+        });
+    })
 };

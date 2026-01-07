@@ -9,7 +9,6 @@ export const ReviewController = {
     // ================= CREATE REVIEW =================
     createReview: catchAsync(async (req: Request, res: Response) => {
         const user = req.user as JwtPayload;
-        console.log('from controller: ', req.body);
 
         const result = await ReviewService.createReview(
             req.body,

@@ -49,6 +49,6 @@ router.patch("/:slug/send-verify-req", checkAuth(TUserRole.GUIDE), TourControlle
 router.patch("/:slug/verify-tour", checkAuth(TUserRole.ADMIN), TourController.verifyTour);
 
 
-
+router.delete("/:slug", checkAuth(TUserRole.GUIDE), TourController.deleteTourBySlug);
 
 export const TourRoutes = router;
